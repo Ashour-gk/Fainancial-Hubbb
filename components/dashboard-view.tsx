@@ -1,6 +1,7 @@
 'use client'
 
-import { Filter, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { RefreshCw, RotateCcw, ChevronDown, Calendar } from 'lucide-react'
 import StatsCards from './stats-cards'
 import DataGrid from './data-grid'
 
@@ -9,33 +10,106 @@ interface DashboardViewProps {
 }
 
 export default function DashboardView({ onAddClick }: DashboardViewProps) {
+  const [statusFilter, setStatusFilter] = useState('جميع الحالات')
+  const [categoryFilter, setCategoryFilter] = useState('جميع التصنيفات')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+
+  const resetFilters = () => {
+    setStatusFilter('جميع الحالات')
+    setCategoryFilter('جميع التصنيفات')
+    setFromDate('')
+    setToDate('')
+  }
+
   return (
-    <main className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">حسابات المخزن المالية</h1>
-        <p className="text-muted-foreground">إدارة ومراقبة جميع معاملات المخزن</p>
+    <main className="dashboard-main">
+      {/* Page Header */}
+      <div className="dashboard-header">
+        <div className="dashboard-title-block">
+          <h1 className="dashboard-title">تحليل التقارير المالية</h1>
+          <p className="dashboard-subtitle">نظرة عامة على التقارير</p>
+        </div>
+        <button className="btn-refresh" onClick={onAddClick}>
+          <RefreshCw size={16} />
+          <span>تحديث البيانات</span>
+        </button>
       </div>
 
-      <StatsCards />
+      {/* Filter Bar */}
+      <div className="filter-bar">
+        {/* Status Filter */}
+        <div className="filter-select-wrapper">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option>جميع الحالات</option>
+            <option>مكتمل</option>
+            <option>معلق</option>
+            <option>مرفوض</option>
+          </select>
+          <ChevronDown size={16} className="filter-select-icon" />
+        </div>
 
-      <div className="mt-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-foreground">سجل المعاملات</h2>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-secondary transition-colors text-sm font-medium">
-              <Filter size={16} />
-              تصفية
-            </button>
-            <button 
-              onClick={onAddClick}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity text-sm font-medium"
-            >
-              <Plus size={16} />
-              إضافة معاملة
-            </button>
+        {/* Category Filter */}
+        <div className="filter-select-wrapper">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option>جميع التصنيفات</option>
+            <option>إشتراكات نت</option>
+            <option>مصروفات إدارية</option>
+            <option>أخرى</option>
+          </select>
+          <ChevronDown size={16} className="filter-select-icon" />
+        </div>
+
+        {/* From Date */}
+        <div className="filter-date-wrapper">
+          <label className="filter-date-label">من تاريخ</label>
+          <div className="filter-date-input-wrapper">
+            <Calendar size={16} className="filter-date-icon" />
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              placeholder="اختر تاريخاً"
+              className="filter-date-input"
+            />
           </div>
         </div>
 
+        {/* To Date */}
+        <div className="filter-date-wrapper">
+          <label className="filter-date-label">إلى تاريخ</label>
+          <div className="filter-date-input-wrapper">
+            <Calendar size={16} className="filter-date-icon" />
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              placeholder="اختر تاريخاً"
+              className="filter-date-input"
+            />
+          </div>
+        </div>
+
+        {/* Reset */}
+        <button className="filter-reset-btn" onClick={resetFilters} title="إعادة ضبط الفلاتر">
+          <RotateCcw size={15} />
+          <span>إعادة ضبط الفلاتر</span>
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <StatsCards />
+
+      {/* Data Grid */}
+      <div className="datagrid-section">
         <DataGrid />
       </div>
     </main>

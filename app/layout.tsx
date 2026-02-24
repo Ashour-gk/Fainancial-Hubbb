@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
-const cairo = Cairo({ 
+const cairo = Cairo({
   subsets: ['arabic', 'latin'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-cairo'
@@ -40,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body className={`${cairo.variable} font-sans antialiased`}>
+      <body className={`${cairo.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

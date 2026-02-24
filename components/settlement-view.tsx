@@ -3,8 +3,6 @@
 import { useState, useRef } from 'react'
 import { Calendar, User, FileText, Paperclip, Trash2, Plus } from 'lucide-react'
 import { AgGridReact } from 'ag-grid-react'
-import 'ag-grid-community/styles/ag-grid.css'
-import 'ag-grid-community/styles/ag-theme-alpine.css'
 import '@/lib/ag-grid-setup' // Register AG Grid modules
 
 interface ExpenseRecord {
@@ -64,7 +62,7 @@ export default function SettlementView() {
   }
 
   const updateExpense = (id: number, field: keyof ExpenseRecord, value: string) => {
-    setExpenses(expenses.map(expense => 
+    setExpenses(expenses.map(expense =>
       expense.id === id ? { ...expense, [field]: value } : expense
     ))
   }
@@ -72,7 +70,7 @@ export default function SettlementView() {
   const handleSave = async () => {
     setIsSaving(true)
     setSaveMessage('')
-    
+
     try {
       // Validate data
       const hasEmptyFields = expenses.some(exp => !exp.date || !exp.description || parseFloat(exp.amount) < 0)
@@ -81,7 +79,7 @@ export default function SettlementView() {
         setTimeout(() => setSaveMessage(''), 3000)
         return
       }
-      
+
       // Simulate save operation
       await new Promise(resolve => setTimeout(resolve, 1500))
       setSaveMessage('تم حفظ البيانات بنجاح!')
@@ -99,11 +97,11 @@ export default function SettlementView() {
     const headers = ['م', 'التاريخ', 'المبلغ', 'البيان', 'المرفقات']
     const csvContent = [
       headers.join(','),
-      ...expenses.map((exp, index) => 
+      ...expenses.map((exp, index) =>
         [index + 1, exp.date, exp.amount, exp.description, exp.attachment || ''].join(',')
       )
     ].join('\n')
-    
+
     // Create and download file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -114,7 +112,7 @@ export default function SettlementView() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    
+
     setSaveMessage('تم تصدير البيانات بنجاح')
     setTimeout(() => setSaveMessage(''), 3000)
   }
@@ -163,9 +161,9 @@ export default function SettlementView() {
           return (
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-700">{params.value}</span>
-              <button 
+              <button
                 onClick={() => {
-                  const updatedExpenses = expenses.map(exp => 
+                  const updatedExpenses = expenses.map(exp =>
                     exp.id === params.data.id ? { ...exp, attachment: '' } : exp
                   )
                   setExpenses(updatedExpenses)
@@ -190,7 +188,7 @@ export default function SettlementView() {
       field: 'actions',
       editable: false,
       cellRenderer: (params: any) => (
-        <button 
+        <button
           onClick={() => deleteExpenseRow(params.data.id)}
           className="text-red-500 hover:text-red-700"
         >
@@ -211,7 +209,7 @@ export default function SettlementView() {
   }
 
   const onCellValueChanged = (params: any) => {
-    const updatedExpenses = expenses.map(exp => 
+    const updatedExpenses = expenses.map(exp =>
       exp.id === params.data.id ? { ...params.data } : exp
     )
     setExpenses(updatedExpenses)
@@ -224,9 +222,9 @@ export default function SettlementView() {
         <div className="absolute top-4 left-4">
           <FileText className="text-gray-400 dark:text-gray-600" size={24} />
         </div>
-        
+
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">بيانات تسوية عهدة مبلغ</h2>
-        
+
         <div className="space-y-4">
           {/* Description Field */}
           <div>
@@ -244,7 +242,7 @@ export default function SettlementView() {
             <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
               <span className="text-sm text-gray-700 dark:text-gray-300">مسودة</span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">التصنيف:</span>
               <select
@@ -277,7 +275,7 @@ export default function SettlementView() {
         <div className="absolute top-4 left-4">
           <FileText className="text-gray-400 dark:text-gray-600" size={24} />
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">سجل المصروفات</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">إضافة أو تعديل أو حذف المصروفات</p>
@@ -307,7 +305,7 @@ export default function SettlementView() {
             <Plus size={20} />
             <span>إضافة صف</span>
           </button>
-          
+
           <button
             onClick={handleExport}
             className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
@@ -316,14 +314,13 @@ export default function SettlementView() {
             <span>تصدير CSV</span>
           </button>
         </div>
-        
+
         {/* Status Message */}
         {saveMessage && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${
-            saveMessage.includes('نجاح') ? 'bg-green-100 text-green-800' : 
-            saveMessage.includes('خطأ') ? 'bg-red-100 text-red-800' : 
-            'bg-blue-100 text-blue-800'
-          }`}>
+          <div className={`mt-4 p-3 rounded-lg text-sm ${saveMessage.includes('نجاح') ? 'bg-green-100 text-green-800' :
+              saveMessage.includes('خطأ') ? 'bg-red-100 text-red-800' :
+                'bg-blue-100 text-blue-800'
+            }`}>
             {saveMessage}
           </div>
         )}
@@ -334,7 +331,7 @@ export default function SettlementView() {
         <div className="absolute top-4 left-4">
           <FileText className="text-gray-400 dark:text-gray-600" size={24} />
         </div>
-        
+
         <div className="mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">ملخص</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">المجاميع المحسوبة تلقائياً</p>
@@ -358,9 +355,9 @@ export default function SettlementView() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex justify-end mt-6">
-          <button 
+          <button
             onClick={handleSave}
             disabled={isSaving}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

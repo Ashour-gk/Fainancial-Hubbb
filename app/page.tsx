@@ -1,54 +1,43 @@
 'use client'
 
 import { useState } from 'react'
-import Header from '@/components/header'
 import Sidebar from '@/components/sidebar'
 import DashboardView from '@/components/dashboard-view'
 import FinancialReportsView from '@/components/financial-reports-view'
+import ReportsView from '@/components/reports-view'
 import SettlementView from '@/components/settlement-view'
 import ReportLogView from '@/components/report-log-view'
 import UsersView from '@/components/users-view'
-import DocumentsView from '@/components/documents-view'
 import SettingsView from '@/components/settings-view'
-import Modal from '@/components/modal'
 
-export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const [isModalOpen, setIsModalOpen] = useState(false)
+export default function AppShell() {
+  const [activeTab, setActiveTab] = useState('reports')
 
-  const renderContent = () => {
-    switch(activeTab) {
+  const renderView = () => {
+    switch (activeTab) {
       case 'dashboard':
-        return <DashboardView onAddClick={() => setIsModalOpen(true)} />
+        return <DashboardView onAddClick={() => setActiveTab('reports')} />
       case 'reports':
-        return <FinancialReportsView />
+        return <ReportsView />
       case 'settlement':
         return <SettlementView />
       case 'report-log':
         return <ReportLogView />
-      case 'profile':
-        return <UsersView />
       case 'users':
         return <UsersView />
-      case 'documents':
-        return <DocumentsView />
       case 'settings':
         return <SettingsView />
       default:
-        return <DashboardView onAddClick={() => setIsModalOpen(true)} />
+        return <FinancialReportsView />
     }
   }
 
   return (
-    <div className="flex h-screen bg-background dark:bg-gray-900">
+    <div className="app-layout">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      <div className="flex-1 overflow-auto flex flex-col">
-        <Header />
-        {renderContent()}
+      <div style={{ flex: 1, overflowY: 'auto', minWidth: 0 }}>
+        {renderView()}
       </div>
-
-      {isModalOpen && <Modal onClose={() => setIsModalOpen(false)} />}
     </div>
   )
 }

@@ -1,56 +1,80 @@
-import { TrendingUp, DollarSign, Users, FileText } from 'lucide-react'
+import { TrendingUp, DollarSign, Users, FileText, Wallet, BarChart2 } from 'lucide-react'
 
 export default function StatsCards() {
-  const stats = [
-    {
-      label: 'إجمالي الإيرادات',
-      value: '£800,500.00',
-      change: '+14%',
-      icon: DollarSign,
-      color: 'bg-accent'
-    },
-    {
-      label: 'المعاملات المتوقعة',
-      value: '£284,500.00',
-      change: '+8%',
-      icon: FileText,
-      color: 'bg-blue-500'
-    },
-    {
-      label: 'عدد المستخدمين',
-      value: '2,345',
-      change: '+12%',
-      icon: Users,
-      color: 'bg-green-500'
-    },
-    {
-      label: 'معدل النمو',
-      value: '28%',
-      change: '+5%',
-      icon: TrendingUp,
-      color: 'bg-purple-500'
-    }
-  ]
+  const contractData = {
+    totalAmount: '£300,500.00',
+    totalReports: '38',
+  }
+
+  const expensesData = {
+    totalAmount: '£284,500.00',
+    totalExpenses: '142',
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, index) => {
-        const Icon = stat.icon
-        return (
-          <div key={index} className="bg-card rounded-lg p-6 border border-border">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                <h3 className="text-2xl font-bold text-foreground">{stat.value}</h3>
-              </div>
-              <div className={`${stat.color} p-3 rounded-lg`}>
-                <Icon size={24} className="text-white" />
-              </div>
-            </div>
-            <p className="text-xs font-medium text-green-600">{stat.change} من الفترة السابقة</p>
+    <div className="stats-grid">
+      {/* Contract Data Card */}
+      <div className="stat-card">
+        <div className="stat-card-header">
+          <span className="stat-card-title">بيانات العهدة</span>
+        </div>
+        <div className="stat-card-body">
+          <div className="stat-item">
+            <span className="stat-value">{contractData.totalAmount}</span>
+            <span className="stat-label">إجمالي المبلغ</span>
           </div>
-        )
-      })}
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value stat-value-count">{contractData.totalReports}</span>
+            <span className="stat-label">إجمالي تقارير العهدة</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Expenses Summary Card */}
+      <div className="stat-card">
+        <div className="stat-card-header">
+          <span className="stat-card-title">ملخص المصروفات</span>
+        </div>
+        <div className="stat-card-body">
+          <div className="stat-item">
+            <span className="stat-value">{expensesData.totalAmount}</span>
+            <span className="stat-label">إجمالي المبلغ</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value stat-value-count">{expensesData.totalExpenses}</span>
+            <span className="stat-label">إجمالي المصروفات</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional metric cards */}
+      <div className="stat-card stat-card-accent">
+        <div className="stat-card-header">
+          <span className="stat-card-title">إجمالي الإيرادات</span>
+          <div className="stat-icon-wrap stat-icon-blue">
+            <DollarSign size={20} className="text-white" />
+          </div>
+        </div>
+        <div className="stat-card-solo">
+          <span className="stat-value">£800,500.00</span>
+          <span className="stat-badge stat-badge-up">+14% من الفترة السابقة</span>
+        </div>
+      </div>
+
+      <div className="stat-card stat-card-accent">
+        <div className="stat-card-header">
+          <span className="stat-card-title">معدل النمو</span>
+          <div className="stat-icon-wrap stat-icon-green">
+            <TrendingUp size={20} className="text-white" />
+          </div>
+        </div>
+        <div className="stat-card-solo">
+          <span className="stat-value">28%</span>
+          <span className="stat-badge stat-badge-up">+5% من الفترة السابقة</span>
+        </div>
+      </div>
     </div>
   )
 }
