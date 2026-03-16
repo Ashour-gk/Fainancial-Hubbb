@@ -1,371 +1,390 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Calendar, User, FileText, Paperclip, Trash2, Plus } from 'lucide-react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import '@/lib/ag-grid-setup' // Register AG Grid modules
+import type { ColDef, ICellRendererParams } from 'ag-grid-community'
+import { themeQuartz } from 'ag-grid-community'
+import '@/lib/ag-grid-setup'
+import { Calendar, User, FileText, Paperclip, Trash2, Plus, Calculator, X } from 'lucide-react'
 
 interface ExpenseRecord {
   id: number
   date: string
   amount: string
   description: string
-  attachment?: string
+  attachment: string
 }
 
+/* ── Cell Renderers ──────────────────────────── */
+function RowNumRenderer({ node }: ICellRendererParams) {
+  return (
+    <span style={{ fontSize: '.8rem', color: '#94a3b8', fontWeight: 600 }}>
+      {(node.rowIndex ?? 0) + 1}
+    </span>
+  )
+}
+
+function DateCellRenderer({ data, context }: ICellRendererParams) {
+  const parts = data.date ? data.date.split('/') : ['', '', '']
+  const isoVal = parts.length === 3
+    ? `${parts[2]}-${String(parts[0]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}`
+    : ''
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <Calendar size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
+      <input
+        type="date"
+        style={{ border: 'none', outline: 'none', fontFamily: 'inherit', fontSize: '.84rem', color: '#1e293b', background: 'transparent', direction: 'ltr' }}
+        value={isoVal}
+        onChange={e => {
+          const p = e.target.value.split('-')
+          context.updateRow(data.id, 'date', p.length === 3 ? `${p[1]}/${p[2]}/${p[0]}` : '')
+        }}
+      />
+    </div>
+  )
+}
+
+function AmountCellRenderer({ data, context }: ICellRendererParams) {
+  return (
+    <input
+      type="number"
+      placeholder="0.00"
+      style={{ width: '100%', border: '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontFamily: 'inherit', fontSize: '.875rem', color: '#1e293b', background: 'transparent', outline: 'none', direction: 'ltr', textAlign: 'left' }}
+      value={data.amount}
+      onChange={e => context.updateRow(data.id, 'amount', e.target.value)}
+      onFocus={e => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff' }}
+      onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'transparent' }}
+    />
+  )
+}
+
+function DescCellRenderer({ data, context }: ICellRendererParams) {
+  return (
+    <input
+      type="text"
+      placeholder="أدخل البيان..."
+      style={{ width: '100%', border: '1px solid transparent', borderRadius: 7, padding: '6px 10px', fontFamily: 'inherit', fontSize: '.875rem', color: '#1e293b', background: 'transparent', outline: 'none', direction: 'rtl' }}
+      value={data.description}
+      onChange={e => context.updateRow(data.id, 'description', e.target.value)}
+      onFocus={e => { e.target.style.borderColor = '#93c5fd'; e.target.style.background = '#eff6ff' }}
+      onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'transparent' }}
+    />
+  )
+}
+
+function AttachCellRenderer({ data, context }: ICellRendererParams) {
+  if (data.attachment) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Paperclip size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
+        <span style={{ fontSize: '.8rem', color: '#475569', fontWeight: 500 }}>{data.attachment}</span>
+        <button
+          onClick={() => context.updateRow(data.id, 'attachment', '')}
+          style={{ display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
+        >
+          <X size={12} />
+        </button>
+      </div>
+    )
+  }
+  return (
+    <button
+      onClick={() => context.addAttachment(data.id)}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', border: '1px dashed #cbd5e1', borderRadius: 6, background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '.78rem', fontFamily: 'inherit', transition: 'all .15s' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563eb'; e.currentTarget.style.color = '#2563eb'; e.currentTarget.style.background = '#eff6ff' }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent' }}
+    >
+      <Paperclip size={12} /> إرفاق
+    </button>
+  )
+}
+
+function DeleteRowRenderer({ data, context }: ICellRendererParams) {
+  return (
+    <button
+      onClick={() => context.deleteRow(data.id)}
+      title="حذف الصف"
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 7, border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', transition: 'background .15s' }}
+      onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    >
+      <Trash2 size={14} />
+    </button>
+  )
+}
+
+/* ── Main Component ───────────────────────────── */
 export default function SettlementView() {
+  const gridRef = useRef<AgGridReact>(null)
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('internet')
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([
-    {
-      id: 1,
-      date: '01/20/2024',
-      amount: '300',
-      description: 'شحن نت المدرسة 01252652642',
-      attachment: 'مثال'
-    },
-    {
-      id: 2,
-      date: '01/22/2024',
-      amount: '00.0',
-      description: '',
-      attachment: ''
-    }
+    { id: 1, date: '01/20/2024', amount: '300', description: 'شحن نت المدرسة 01252652642', attachment: 'مثال' },
+    { id: 2, date: '01/22/2024', amount: '0.0', description: '', attachment: '' },
   ])
-
   const [isSaving, setIsSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState('')
-  const gridRef = useRef<AgGridReact>(null)
+  const [msgText, setMsg] = useState('')
 
-  const addExpenseRow = () => {
-    const newExpense: ExpenseRecord = {
-      id: Math.max(...expenses.map(e => e.id), 0) + 1,
-      date: new Date().toISOString().split('T')[0],
-      amount: '0.00',
-      description: '',
-      attachment: ''
-    }
-    setExpenses([...expenses, newExpense])
-    setSaveMessage('تمت إضافة صف جديد')
-    setTimeout(() => setSaveMessage(''), 3000)
+  const flash = (msg: string) => { setMsg(msg); setTimeout(() => setMsg(''), 3000) }
+
+  const addRow = () => {
+    setExpenses(prev => [...prev, {
+      id: Math.max(...prev.map(e => e.id), 0) + 1,
+      date: new Date().toLocaleDateString('en-CA').replace(/-/g, '/').slice(0, 10),
+      amount: '0.00', description: '', attachment: '',
+    }])
+    flash('تمت إضافة صف جديد')
   }
 
-  const deleteExpenseRow = (id: number) => {
-    if (expenses.length > 1) {
-      setExpenses(expenses.filter(expense => expense.id !== id))
-      setSaveMessage('تم حذف الصف بنجاح')
-      setTimeout(() => setSaveMessage(''), 3000)
-    } else {
-      setSaveMessage('لا يمكن حذف جميع الصفوف')
-      setTimeout(() => setSaveMessage(''), 3000)
-    }
-  }
+  const deleteRow = useCallback((id: number) => {
+    setExpenses(prev => {
+      if (prev.length <= 1) { flash('لا يمكن حذف جميع الصفوف'); return prev }
+      return prev.filter(e => e.id !== id)
+    })
+  }, [])
 
-  const updateExpense = (id: number, field: keyof ExpenseRecord, value: string) => {
-    setExpenses(expenses.map(expense =>
-      expense.id === id ? { ...expense, [field]: value } : expense
-    ))
-  }
+  const updateRow = useCallback((id: number, field: keyof ExpenseRecord, value: string) =>
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e)), [])
+
+  const addAttachment = useCallback((id: number) => {
+    const label = prompt('اسم المرفق:')
+    if (label) updateRow(id, 'attachment', label)
+  }, [updateRow])
 
   const handleSave = async () => {
     setIsSaving(true)
-    setSaveMessage('')
-
-    try {
-      // Validate data
-      const hasEmptyFields = expenses.some(exp => !exp.date || !exp.description || parseFloat(exp.amount) < 0)
-      if (hasEmptyFields) {
-        setSaveMessage('يرجى ملء جميع الحقول المطلوبة')
-        setTimeout(() => setSaveMessage(''), 3000)
-        return
-      }
-
-      // Simulate save operation
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setSaveMessage('تم حفظ البيانات بنجاح!')
-      setTimeout(() => setSaveMessage(''), 3000)
-    } catch (error) {
-      setSaveMessage('حدث خطأ أثناء الحفظ')
-      setTimeout(() => setSaveMessage(''), 3000)
-    } finally {
-      setIsSaving(false)
-    }
+    await new Promise(r => setTimeout(r, 1200))
+    flash('تم حفظ البيانات بنجاح!')
+    setIsSaving(false)
   }
 
   const handleExport = () => {
-    // Create CSV content
-    const headers = ['م', 'التاريخ', 'المبلغ', 'البيان', 'المرفقات']
-    const csvContent = [
-      headers.join(','),
-      ...expenses.map((exp, index) =>
-        [index + 1, exp.date, exp.amount, exp.description, exp.attachment || ''].join(',')
-      )
+    const csv = [
+      ['م', 'التاريخ', 'المبلغ', 'البيان', 'المرفقات'].join(','),
+      ...expenses.map((e, i) => [i + 1, e.date, e.amount, e.description, e.attachment || ''].join(',')),
     ].join('\n')
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `expenses_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    setSaveMessage('تم تصدير البيانات بنجاح')
-    setTimeout(() => setSaveMessage(''), 3000)
+    const a = Object.assign(document.createElement('a'), { href: url, download: `expenses_${Date.now()}.csv`, style: 'display:none' })
+    document.body.appendChild(a); a.click(); document.body.removeChild(a)
+    flash('تم تصدير البيانات بنجاح')
   }
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || '0'), 0)
+  const totalExpenses = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-  // AgGrid Column Definitions
-  const [colDefs] = useState([
-    {
-      headerName: 'م',
-      valueGetter: (params: any) => params.node.rowIndex + 1,
-      width: 60,
-      sortable: false,
-      filter: false
-    },
-    {
-      headerName: 'التاريخ',
-      field: 'date',
-      editable: true,
-      cellEditor: 'agDateCellEditor',
-      cellEditorParams: {
-        dateFormat: 'yyyy-MM-dd'
-      },
-      width: 120
-    },
-    {
-      headerName: 'المبلغ',
-      field: 'amount',
-      editable: true,
-      cellEditor: 'agNumberCellEditor',
-      width: 100
-    },
-    {
-      headerName: 'البيان',
-      field: 'description',
-      editable: true,
-      cellEditor: 'agTextCellEditor',
-      flex: 1
-    },
-    {
-      headerName: 'المرفقات',
-      field: 'attachment',
-      editable: false,
-      cellRenderer: (params: any) => {
-        if (params.value) {
-          return (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-700">{params.value}</span>
-              <button
-                onClick={() => {
-                  const updatedExpenses = expenses.map(exp =>
-                    exp.id === params.data.id ? { ...exp, attachment: '' } : exp
-                  )
-                  setExpenses(updatedExpenses)
-                }}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <span className="text-xs">×</span>
-              </button>
-            </div>
-          )
-        }
-        return (
-          <button className="text-gray-400 hover:text-gray-600">
-            <Paperclip size={16} />
-          </button>
-        )
-      },
-      width: 100
-    },
-    {
-      headerName: '',
-      field: 'actions',
-      editable: false,
-      cellRenderer: (params: any) => (
-        <button
-          onClick={() => deleteExpenseRow(params.data.id)}
-          className="text-red-500 hover:text-red-700"
-        >
-          <Trash2 size={16} />
-        </button>
-      ),
-      width: 60,
-      sortable: false,
-      filter: false
-    }
-  ])
+  const gridContext = useMemo(() => ({ deleteRow, updateRow, addAttachment }), [deleteRow, updateRow, addAttachment])
 
-  const defaultColDef = {
-    sortable: true,
-    filter: true,
-    resizable: true,
-    headerClass: 'ag-header-cell-label'
-  }
+  const colDefs = useMemo<ColDef<ExpenseRecord>[]>(() => [
+    { headerName: 'م', colId: 'rowNum', width: 56, cellRenderer: RowNumRenderer, sortable: false, filter: false, resizable: false, cellStyle: () => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }) },
+    { headerName: 'التاريخ', field: 'date', width: 190, cellRenderer: DateCellRenderer, sortable: false, filter: false, cellStyle: () => ({ display: 'flex', alignItems: 'center', padding: '2px 8px' }) },
+    { headerName: 'المبلغ', field: 'amount', width: 120, cellRenderer: AmountCellRenderer, sortable: false, filter: false, cellStyle: () => ({ padding: '2px 4px' }) },
+    { headerName: 'البيان', field: 'description', flex: 1, cellRenderer: DescCellRenderer, sortable: false, filter: false, cellStyle: () => ({ padding: '2px 4px' }) },
+    { headerName: 'المرفقات', field: 'attachment', width: 140, cellRenderer: AttachCellRenderer, sortable: false, filter: false, resizable: false, cellStyle: () => ({ display: 'flex', alignItems: 'center', padding: '4px 8px' }) },
+    { headerName: '', colId: 'del', width: 52, cellRenderer: DeleteRowRenderer, sortable: false, filter: false, resizable: false, cellStyle: () => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }) },
+  ], [])
 
-  const onCellValueChanged = (params: any) => {
-    const updatedExpenses = expenses.map(exp =>
-      exp.id === params.data.id ? { ...params.data } : exp
-    )
-    setExpenses(updatedExpenses)
-  }
+  const defaultColDef = useMemo<ColDef>(() => ({ resizable: true }), [])
+
+  const isOk  = msgText.includes('نجاح') || msgText.includes('جديد')
+  const isErr = msgText.includes('خطأ') || msgText.includes('لا يمكن')
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Settlement Data Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 relative">
-        <div className="absolute top-4 left-4">
-          <FileText className="text-gray-400 dark:text-gray-600" size={24} />
-        </div>
+    <>
+      <style>{`
+        .sv-wrap { padding:28px 36px 60px; background:#f5f7fa; min-height:100vh; direction:rtl; font-family:'Cairo','Segoe UI',Tahoma,sans-serif; }
+        @media(max-width:640px){ .sv-wrap { padding:16px 14px 48px; } }
+        .sv-page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px; }
+        .sv-page-title { font-size:1.7rem; font-weight:800; color:#0f1b2d; letter-spacing:-.025em; }
+        @media(max-width:640px){ .sv-page-title { font-size:1.3rem; } }
+        .sv-save-btn { display:inline-flex; align-items:center; gap:7px; padding:10px 22px; background:#2563eb; color:#fff; border:none; border-radius:10px; font-family:inherit; font-size:.875rem; font-weight:600; cursor:pointer; box-shadow:0 2px 10px rgba(37,99,235,.28); transition:all .18s ease; }
+        .sv-save-btn:hover:not(:disabled) { background:#1d4ed8; transform:translateY(-1px); }
+        .sv-save-btn:disabled { opacity:.6; cursor:not-allowed; }
+        .sv-toast { margin-bottom:18px; padding:10px 16px; border-radius:10px; font-size:.875rem; font-weight:500; animation:svFade .22s ease; }
+        .sv-toast-ok  { background:#dcfce7; color:#166534; }
+        .sv-toast-err { background:#fee2e2; color:#991b1b; }
+        .sv-toast-info{ background:#dbeafe; color:#1e40af; }
+        @keyframes svFade { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:none} }
+        .sv-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 2px 12px rgba(15,27,45,.06); margin-bottom:18px; overflow:hidden; }
+        .sv-card-hd { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:10px; }
+        .sv-card-hd-l { display:flex; align-items:center; gap:10px; }
+        .sv-card-ico { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .sv-card-title { font-size:1rem; font-weight:700; color:#0f1b2d; }
+        .sv-card-sub { font-size:.75rem; color:#94a3b8; margin-top:1px; }
+        .sv-status-badge { display:inline-flex; align-items:center; padding:5px 14px; border-radius:20px; font-size:.8rem; font-weight:700; background:#f1f5f9; color:#475569; border:1.5px solid #cbd5e1; user-select:none; }
+        .sv-body { padding:20px 22px; }
+        @media(max-width:640px){ .sv-body { padding:16px; } }
+        .sv-desc-input { width:100%; border:none; outline:none; font-family:inherit; font-size:.9rem; color:#334155; background:transparent; resize:none; min-height:36px; direction:rtl; margin-bottom:14px; padding-bottom:10px; border-bottom:1px dashed #e2e8f0; box-sizing:border-box; }
+        .sv-desc-input::placeholder { color:#94a3b8; }
+        .sv-meta-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f8fafc; flex-wrap:wrap; }
+        .sv-meta-row:last-child { border-bottom:none; }
+        .sv-meta-label { display:flex; align-items:center; gap:6px; font-size:.82rem; color:#64748b; font-weight:600; min-width:110px; flex-shrink:0; }
+        .sv-meta-label svg { color:#94a3b8; }
+        .sv-meta-val { font-size:.875rem; font-weight:600; color:#1e293b; }
+        .sv-cat-sel { padding:7px 12px; border:1px solid #e2e8f0; border-radius:9px; background:#f8fafc; font-family:inherit; font-size:.875rem; color:#1e293b; outline:none; transition:border-color .15s; }
+        .sv-cat-sel:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
 
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">بيانات تسوية عهدة مبلغ</h2>
+        /* AG Grid card */
+        .sv-grid-card .ag-root-wrapper { border:none !important; }
+        .sv-grid-card .ag-header { background:#fafbfd !important; border-bottom:1px solid #f1f5f9 !important; }
+        .sv-grid-card .ag-header-cell { background:#fafbfd !important; }
+        .sv-grid-card .ag-header-cell-text { font-size:.78rem; font-weight:700; color:#94a3b8; letter-spacing:.02em; font-family:'Cairo','Segoe UI',Tahoma,sans-serif; }
+        .sv-grid-card .ag-row { border-bottom:1px solid #f8fafc !important; font-family:'Cairo','Segoe UI',Tahoma,sans-serif; }
+        .sv-grid-card .ag-row:hover { background:#fafbfd !important; }
+        .sv-grid-card .ag-row:last-child { border-bottom:none !important; }
+        .sv-grid-card .ag-cell { border:none !important; }
 
-        <div className="space-y-4">
-          {/* Description Field */}
-          <div>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="أضف وصفا مختصرا (اختياري)"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
-          </div>
+        /* Bottom toolbar */
+        .sv-grid-footer { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:1px solid #f1f5f9; flex-wrap:wrap; gap:10px; }
+        .sv-add-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:1.5px dashed #2563eb; border-radius:9px; background:transparent; color:#2563eb; cursor:pointer; font-family:inherit; font-size:.84rem; font-weight:600; transition:all .16s; }
+        .sv-add-btn:hover { background:#eff6ff; border-style:solid; }
+        .sv-export-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:1.5px solid #16a34a; border-radius:9px; background:transparent; color:#16a34a; cursor:pointer; font-family:inherit; font-size:.84rem; font-weight:600; transition:all .16s; }
+        .sv-export-btn:hover { background:#f0fdf4; }
 
-          {/* Status and Category Row */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-              <span className="text-sm text-gray-700 dark:text-gray-300">مسودة</span>
-            </div>
+        /* Summary */
+        .sv-sum-body { padding:20px 22px; direction:rtl; }
+        @media(max-width:640px){ .sv-sum-body { padding:16px; } }
+        .sv-sum-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        @media(max-width:700px){ .sv-sum-cards { grid-template-columns:1fr 1fr; } }
+        @media(max-width:400px){ .sv-sum-cards { grid-template-columns:1fr; } }
+        .sv-sum-card { background:#f8fafc; border:1px solid #f1f5f9; border-radius:12px; padding:14px 16px; }
+        .sv-sum-lbl { font-size:.78rem; color:#94a3b8; font-weight:500; margin-bottom:4px; }
+        .sv-sum-val { font-size:1.2rem; font-weight:800; color:#0f1b2d; font-variant-numeric:tabular-nums; }
+        .sv-sum-val.blue { color:#2563eb; }
+        .sv-form-footer { display:flex; justify-content:flex-end; margin-top:18px; }
+      `}</style>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">التصنيف:</span>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="internet">إشتراكات نت</option>
-                <option value="other">أخرى</option>
-              </select>
-            </div>
-          </div>
+      <div className="sv-wrap">
 
-          {/* Creation Info */}
-          <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-center gap-2">
-              <User size={16} />
-              <span>أنشئ بواسطة أحمد يحيى</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar size={16} />
-              <span>تاريخ الإنشاء ١٥ يناير ٢٠٢٤</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Expenses Record Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6 relative">
-        <div className="absolute top-4 left-4">
-          <FileText className="text-gray-400 dark:text-gray-600" size={24} />
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">سجل المصروفات</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">إضافة أو تعديل أو حذف المصروفات</p>
-        </div>
-
-        {/* AgGrid Table */}
-        <div className="ag-theme-alpine dark:ag-theme-alpine-dark" style={{ height: 300, width: '100%', direction: 'rtl' }}>
-          <AgGridReact
-            ref={gridRef}
-            rowData={expenses}
-            columnDefs={colDefs}
-            defaultColDef={defaultColDef}
-            onCellValueChanged={onCellValueChanged}
-            domLayout='autoHeight'
-            enableRtl={true}
-            suppressRowClickSelection={true}
-            theme="legacy"
-          />
-        </div>
-
-        {/* Add Row Button */}
-        <div className="flex justify-between items-center mt-4">
-          <button
-            onClick={addExpenseRow}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <Plus size={20} />
-            <span>إضافة صف</span>
-          </button>
-
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
-          >
-            <FileText size={20} />
-            <span>تصدير CSV</span>
-          </button>
-        </div>
-
-        {/* Status Message */}
-        {saveMessage && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${saveMessage.includes('نجاح') ? 'bg-green-100 text-green-800' :
-              saveMessage.includes('خطأ') ? 'bg-red-100 text-red-800' :
-                'bg-blue-100 text-blue-800'
-            }`}>
-            {saveMessage}
-          </div>
-        )}
-      </div>
-
-      {/* Summary Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 relative">
-        <div className="absolute top-4 left-4">
-          <FileText className="text-gray-400 dark:text-gray-600" size={24} />
-        </div>
-
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">ملخص</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">المجاميع المحسوبة تلقائياً</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">إجمالي المصروفات</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">
-              £{totalExpenses.toFixed(2)}
-            </div>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">عدد البنود</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">{expenses.length}</div>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">المتبقي</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">
-              £{(300 - totalExpenses).toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+        {/* Page Header */}
+        <div className="sv-page-header">
+          <h1 className="sv-page-title">تسوية عهدة مبلغ</h1>
+          <button className="sv-save-btn" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
           </button>
         </div>
+
+        {/* Toast */}
+        {msgText && (
+          <div className={`sv-toast ${isErr ? 'sv-toast-err' : isOk ? 'sv-toast-ok' : 'sv-toast-info'}`}>
+            {msgText}
+          </div>
+        )}
+
+        {/* ── Card 1: Report Info ── */}
+        <div className="sv-card">
+          <div className="sv-card-hd">
+            <div className="sv-card-hd-l">
+              <div className="sv-card-ico" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                <FileText size={18} />
+              </div>
+              <div>
+                <div className="sv-card-title">بيانات تسوية عهدة مبلغ</div>
+              </div>
+            </div>
+            <span className="sv-status-badge">مسودة</span>
+          </div>
+          <div className="sv-body">
+            <textarea
+              className="sv-desc-input"
+              rows={1}
+              placeholder="أضف وصفاً مختصراً (اختياري)"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+            />
+            <div className="sv-meta-row">
+              <span className="sv-meta-label">التصنيف</span>
+              <select className="sv-cat-sel" value={category} onChange={e => setCategory(e.target.value)}>
+                <option value="internet">إشتراكات نت</option>
+                <option value="misc">مشتريات متنوعة</option>
+                <option value="custody">عهدة</option>
+                <option value="other">أخرى</option>
+              </select>
+            </div>
+            <div className="sv-meta-row">
+              <span className="sv-meta-label"><User size={14} />أنشئ بواسطة</span>
+              <span className="sv-meta-val">أحمد يحيى</span>
+              <span className="sv-meta-label" style={{ marginRight: 'auto' }}><Calendar size={14} />تاريخ الإنشاء</span>
+              <span className="sv-meta-val">١٥ يناير ٢٠٢٤</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Card 2: Expenses Grid ── */}
+        <div className="sv-card">
+          <div className="sv-card-hd">
+            <div className="sv-card-hd-l">
+              <div className="sv-card-ico" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+                <Calculator size={18} />
+              </div>
+              <div>
+                <div className="sv-card-title">سجل المصروفات</div>
+                <div className="sv-card-sub">إضافة أو تعديل أو حذف المصروفات</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="sv-grid-card" style={{ width: '100%', direction: 'rtl' }}>
+            <AgGridReact
+              ref={gridRef}
+              theme={themeQuartz}
+              rowData={expenses}
+              columnDefs={colDefs}
+              defaultColDef={defaultColDef}
+              context={gridContext}
+              domLayout="autoHeight"
+              enableRtl={true}
+              suppressRowClickSelection={true}
+              animateRows={true}
+              rowHeight={52}
+              headerHeight={40}
+            />
+          </div>
+
+          <div className="sv-grid-footer">
+            <button className="sv-add-btn" onClick={addRow}>
+              <Plus size={15} /> إضافة صف
+            </button>
+            <button className="sv-export-btn" onClick={handleExport}>
+              <FileText size={15} /> تصدير CSV
+            </button>
+          </div>
+        </div>
+
+        {/* ── Card 3: Summary ── */}
+        <div className="sv-card">
+          <div className="sv-card-hd">
+            <div className="sv-card-hd-l">
+              <div className="sv-card-ico" style={{ background: '#fef3c7', color: '#d97706' }}>
+                <Calculator size={18} />
+              </div>
+              <div>
+                <div className="sv-card-title">ملخص</div>
+                <div className="sv-card-sub">المجاميع المحسوبة تلقائياً</div>
+              </div>
+            </div>
+          </div>
+          <div className="sv-sum-body">
+            <div className="sv-sum-cards">
+              <div className="sv-sum-card">
+                <div className="sv-sum-lbl">إجمالي المصروفات</div>
+                <div className="sv-sum-val blue">£{totalExpenses.toFixed(2)}</div>
+              </div>
+              <div className="sv-sum-card">
+                <div className="sv-sum-lbl">عدد البنود</div>
+                <div className="sv-sum-val">{expenses.length}</div>
+              </div>
+              <div className="sv-sum-card">
+                <div className="sv-sum-lbl">المتبقي</div>
+                <div className="sv-sum-val">{(300 - totalExpenses).toFixed(2)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </>
   )
 }

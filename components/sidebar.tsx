@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User, LogOut, FileText, LayoutGrid, BookOpen, ChevronRight, Menu, X } from 'lucide-react'
+import { User, LogOut, FileText, LayoutGrid, ChevronRight, Menu, X } from 'lucide-react'
 
 interface SidebarProps {
   activeTab: string
@@ -42,10 +42,9 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   }, [])
 
   const tabs = [
-    { id: 'dashboard', icon: <LayoutGrid size={20} />, label: 'لوحة المعلومات' },
-    { id: 'reports', icon: <FileText size={20} />, label: 'التقارير المالية' },
-    { id: 'report-log', icon: <BookOpen size={20} />, label: 'سجل التقارير' },
-    { id: 'profile', icon: <User size={20} />, label: 'الملف الشخصي' },
+    { id: 'dashboard',  icon: <LayoutGrid size={20} />, label: 'لوحة المعلومات' },
+    { id: 'financial',  icon: <FileText size={20} />,   label: 'التقارير المالية' },
+    { id: 'profile',    icon: <User size={20} />,       label: 'الملف الشخصي' },
   ]
 
   const handleNav = (id: string) => {

@@ -1,228 +1,561 @@
 'use client'
 
-import { useState } from 'react'
-import { Calendar, Filter, RotateCcw } from 'lucide-react'
+import { useState, useRef } from 'react'
+import {
+  Plus, Trash2, FileText, ChevronDown, User, Calendar, X, FileSpreadsheet
+} from 'lucide-react'
+import ReportDetailView from './report-detail-view'
+
+/* ─── Types ─── */
+interface Report {
+  id: number
+  title: string
+  category: string
+  status: string
+  lastOperationDate: string
+  totalAmount: string
+  createdBy: string
+}
+
+/* ─── Status config ─── */
+const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  completed: { label: 'مكتمل',        bg: '#f0fdfa', color: '#0d9488', border: '#99f6e4' },
+  approved:  { label: 'معتمد',        bg: '#f0fdf4', color: '#16a34a', border: '#86efac' },
+  rejected:  { label: 'مرفوض',        bg: '#fff1f2', color: '#e11d48', border: '#fda4af' },
+  review:    { label: 'قيد المراجعة', bg: '#fffbeb', color: '#d97706', border: '#fcd34d' },
+  deleted:   { label: 'محذوف',        bg: '#f9fafb', color: '#9ca3af', border: '#d1d5db' },
+  draft:     { label: 'مسودّة',       bg: '#f8fafc', color: '#94a3b8', border: '#cbd5e1' },
+}
+
+const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات', 'رواتب', 'صيانة']
+
+/* ─── Seed data ─── */
+const INITIAL_REPORTS: Report[] = [
+  { id: 1, title: 'بيانات تسوية عهدة مبلغ',    category: 'إشتراكات نت',     status: 'approved',  lastOperationDate: '1/15/2024', totalAmount: '£4,750.00',  createdBy: 'أحمد يحيى' },
+  { id: 2, title: 'مشتريات مكتبية متنوعة',       category: 'مشتريات متنوعة', status: 'review',    lastOperationDate: '2/1/2024',  totalAmount: '£12,500.00', createdBy: 'أحمد يحيى' },
+  { id: 3, title: 'عهدة نقدية ربع سنوية',        category: 'عهدة',           status: 'rejected',  lastOperationDate: '1/28/2024', totalAmount: '£25,000.00', createdBy: 'أحمد يحيى' },
+  { id: 4, title: 'مصاريف انتقالات الموظفين',    category: 'انتقالات',       status: 'completed', lastOperationDate: '12/1/2023', totalAmount: '£3,200.00',  createdBy: 'أحمد يحيى' },
+  { id: 5, title: 'مشتريات معدات تقنية',         category: 'مشتريات متنوعة', status: 'draft',     lastOperationDate: '2/5/2024',  totalAmount: '£980.00',    createdBy: 'أحمد يحيى' },
+  { id: 6, title: 'اشتراك خدمات الإنترنت',       category: 'إشتراكات نت',    status: 'deleted',   lastOperationDate: '2/10/2024', totalAmount: '£1,500.00',  createdBy: 'أحمد يحيى' },
+]
+
+let nextId = INITIAL_REPORTS.length + 1
 
 export default function FinancialReportsView() {
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
-  const [category, setCategory] = useState('all')
-  const [status, setStatus] = useState('all')
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [message, setMessage] = useState('')
-  const [custodyData, setCustodyData] = useState({ amount: 300500, reports: 38 })
-  const [expensesData, setExpensesData] = useState({ amount: 284500, count: 142 })
+  const [reports, setReports]             = useState<Report[]>(INITIAL_REPORTS)
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
+  const [showModal, setShowModal]         = useState(false)
+  const [catOpen, setCatOpen]             = useState(false)
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    setMessage('')
-    
-    try {
-      // Simulate data refresh
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Update with new simulated data
-      setCustodyData({
-        amount: 300500 + Math.floor(Math.random() * 10000),
-        reports: 38 + Math.floor(Math.random() * 5)
-      })
-      setExpensesData({
-        amount: 284500 + Math.floor(Math.random() * 8000),
-        count: 142 + Math.floor(Math.random() * 3)
-      })
-      
-      setMessage('تم تحديث البيانات بنجاح')
-      setTimeout(() => setMessage(''), 3000)
-    } catch (error) {
-      setMessage('حدث خطأ أثناء التحديث')
-      setTimeout(() => setMessage(''), 3000)
-    } finally {
-      setIsRefreshing(false)
+  /* Modal form state */
+  const [newTitle, setNewTitle]   = useState('')
+  const [newDesc, setNewDesc]     = useState('')
+  const [newCat, setNewCat]       = useState('')
+  const [formErr, setFormErr]     = useState('')
+
+  const catRef = useRef<HTMLDivElement>(null)
+
+  /* ── Open detail view ── */
+  const handleRowClick = (report: Report) => setSelectedReport(report)
+
+  /* ── Delete report ── */
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation()
+    if (confirm('هل تريد حذف هذا التقرير؟')) {
+      setReports(prev => prev.filter(r => r.id !== id))
     }
   }
 
-  const handleResetFilters = () => {
-    setFromDate('')
-    setToDate('')
-    setCategory('all')
-    setStatus('all')
-    setMessage('تم إعادة تعيين الفلاتر')
-    setTimeout(() => setMessage(''), 3000)
+  /* ── Create report ── */
+  const handleCreate = () => {
+    if (!newTitle.trim()) { setFormErr('عنوان التقرير مطلوب'); return }
+    const now = new Date()
+    const dateStr = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`
+    const newReport: Report = {
+      id: nextId++,
+      title: newTitle.trim(),
+      category: newCat || 'غير مصنف',
+      status: 'draft',
+      lastOperationDate: dateStr,
+      totalAmount: '£0.00',
+      createdBy: 'أحمد يحيى',
+    }
+    setReports(prev => [newReport, ...prev])
+    setShowModal(false)
+    setNewTitle(''); setNewDesc(''); setNewCat(''); setFormErr('')
+    // Immediately open the detail view
+    setSelectedReport(newReport)
   }
 
-  const handleExportReport = () => {
-    // Simulate report generation
-    const reportData = {
-      custodyData,
-      expensesData,
-      filters: { fromDate, toDate, category, status },
-      generatedAt: new Date().toLocaleString('ar-SA')
-    }
-    
-    // Create JSON file
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' })
-    const link = document.createElement('a')
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setNewTitle(''); setNewDesc(''); setNewCat(''); setFormErr('')
+  }
+
+  /* ── Export to Excel (CSV) ── */
+  const handleExport = () => {
+    const headers = ['م', 'تاريخ آخر عملية', 'الفئة', 'إجمالي المبلغ', 'الحالة']
+    const rows = reports.map((r, i) => [
+      i + 1, r.lastOperationDate, r.category, r.totalAmount,
+      STATUS_CONFIG[r.status]?.label ?? r.status,
+    ])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `financial_report_${new Date().toISOString().split('T')[0]}.json`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    
-    setMessage('تم تصدير التقرير بنجاح')
-    setTimeout(() => setMessage(''), 3000)
+    const a = document.createElement('a'); a.href = url
+    a.download = `financial_reports_${new Date().toISOString().split('T')[0]}.csv`
+    a.click(); URL.revokeObjectURL(url)
   }
 
-  const handlePrintReport = () => {
-    window.print()
-    setMessage('جاري تجهيز التقرير للطباعة...')
-    setTimeout(() => setMessage('تم تجهيز التقرير للطباعة'), 1000)
-    setTimeout(() => setMessage(''), 3000)
+  /* ── If a report is selected, show its detail page ── */
+  if (selectedReport) {
+    return (
+      <ReportDetailView
+        report={selectedReport}
+        onBack={() => setSelectedReport(null)}
+      />
+    )
   }
 
+  /* ── List View ── */
   return (
-    <div className="p-6 bg-white dark:bg-gray-900 min-h-screen">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex gap-3">
-          <button 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isRefreshing ? 'جاري التحديث...' : 'تحديث البيانات'}
-          </button>
-          <button 
-            onClick={handleExportReport}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            تصدير التقرير
-          </button>
-          <button 
-            onClick={handlePrintReport}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            طباعة
-          </button>
+    <>
+      <style>{`
+        /* ══ Financial Reports Hub ══ */
+        .frh-wrap {
+          padding: 28px 32px 60px;
+          background: #f5f7fa;
+          min-height: 100vh;
+          direction: rtl;
+          font-family: 'Cairo','Segoe UI',Tahoma,sans-serif;
+        }
+        @media(max-width:640px){ .frh-wrap{ padding:18px 14px 60px } }
+
+        /* Header */
+        .frh-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 14px;
+          margin-bottom: 24px;
+        }
+        .frh-title {
+          font-size: 1.6rem;
+          font-weight: 800;
+          color: #0f1b2d;
+          letter-spacing: -.02em;
+        }
+        .frh-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* Buttons */
+        .frh-btn-create {
+          display: inline-flex; align-items: center; gap: 7px;
+          padding: 9px 20px;
+          background: #2563eb; color: #fff;
+          border: none; border-radius: 10px;
+          font-family: inherit; font-size: .875rem; font-weight: 700;
+          cursor: pointer; transition: all .17s;
+          box-shadow: 0 2px 10px rgba(37,99,235,.28);
+        }
+        .frh-btn-create:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .frh-btn-export {
+          display: inline-flex; align-items: center; gap: 7px;
+          padding: 9px 18px;
+          background: #fff; color: #16a34a;
+          border: 1.5px solid #bbf7d0; border-radius: 10px;
+          font-family: inherit; font-size: .875rem; font-weight: 700;
+          cursor: pointer; transition: all .17s;
+        }
+        .frh-btn-export:hover { background: #f0fdf4; border-color: #86efac; }
+
+        /* Table card */
+        .frh-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          box-shadow: 0 2px 14px rgba(15,27,45,.06);
+          overflow: hidden;
+        }
+        .frh-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .frh-table {
+          width: 100%; border-collapse: collapse; min-width: 560px;
+        }
+        .frh-thead th {
+          padding: 12px 18px;
+          font-size: .78rem; font-weight: 700; color: #94a3b8;
+          text-align: right;
+          border-bottom: 1px solid #f1f5f9;
+          background: #fafafa;
+          white-space: nowrap;
+        }
+        .frh-thead th .frh-th-inner {
+          display: inline-flex; align-items: center; gap: 5px;
+        }
+        .frh-tbody tr {
+          border-bottom: 1px solid #f8fafc;
+          transition: background .13s;
+          cursor: pointer;
+        }
+        .frh-tbody tr:last-child { border-bottom: none; }
+        .frh-tbody tr:hover { background: #f0f7ff; }
+        .frh-tbody td { padding: 13px 18px; vertical-align: middle; }
+        .frh-td-date { font-size: .875rem; color: #334155; font-weight: 500; }
+        .frh-td-cat  { font-size: .875rem; color: #334155; font-weight: 600; }
+        .frh-td-amt  { font-size: .9rem;   color: #0f1b2d; font-weight: 700; }
+        .frh-status-badge {
+          display: inline-flex; align-items: center;
+          padding: 4px 14px; border-radius: 20px;
+          font-size: .8rem; font-weight: 700; white-space: nowrap;
+          border: 1.5px solid;
+        }
+        .frh-del-btn {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 30px; height: 30px; border-radius: 8px;
+          border: none; background: transparent; color: #ef4444;
+          cursor: pointer; transition: background .13s;
+        }
+        .frh-del-btn:hover { background: #fee2e2; }
+
+        /* Empty state */
+        .frh-empty {
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          padding: 60px 20px; color: #94a3b8; gap: 12px;
+        }
+        .frh-empty-icon { width: 56px; height: 56px; border-radius: 16px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+        .frh-empty p { font-size: .9rem; font-weight: 600; margin: 0; }
+
+        /* ══ Modal ══ */
+        .frh-modal-overlay {
+          position: fixed; inset: 0;
+          background: rgba(10,20,40,.45);
+          backdrop-filter: blur(3px);
+          z-index: 500;
+          display: flex; align-items: center; justify-content: center;
+          padding: 16px;
+          animation: frh-fadein .18s ease;
+        }
+        @keyframes frh-fadein { from{opacity:0} to{opacity:1} }
+        .frh-modal {
+          background: #fff;
+          border-radius: 20px;
+          box-shadow: 0 20px 60px rgba(10,20,40,.2);
+          width: 100%; max-width: 470px;
+          padding: 28px;
+          direction: rtl;
+          font-family: 'Cairo','Segoe UI',Tahoma,sans-serif;
+          animation: frh-slideup .22s cubic-bezier(.4,0,.2,1);
+          position: relative;
+        }
+        @keyframes frh-slideup { from{transform:translateY(20px);opacity:0} to{transform:none;opacity:1} }
+
+        .frh-modal-header {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 22px;
+        }
+        .frh-modal-title-wrap { display: flex; align-items: center; gap: 10px; }
+        .frh-modal-ico {
+          width: 38px; height: 38px; border-radius: 10px;
+          background: #eff6ff; color: #2563eb;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .frh-modal-title { font-size: 1.15rem; font-weight: 800; color: #0f1b2d; }
+        .frh-modal-close {
+          width: 32px; height: 32px; border-radius: 8px;
+          border: none; background: #f1f5f9; color: #64748b;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: background .15s;
+        }
+        .frh-modal-close:hover { background: #e2e8f0; color: #0f1b2d; }
+
+        /* Meta line (user + date) */
+        .frh-modal-meta {
+          display: flex; align-items: center; gap: 6px;
+          font-size: .82rem; color: #64748b;
+          background: #f8fafc; border-radius: 9px;
+          padding: 8px 14px; margin-bottom: 20px;
+        }
+        .frh-modal-meta svg { color: #94a3b8; }
+
+        /* Fields */
+        .frh-field { margin-bottom: 16px; }
+        .frh-label {
+          display: block; font-size: .82rem; font-weight: 700;
+          color: #334155; margin-bottom: 6px;
+        }
+        .frh-label span { color: #ef4444; margin-right: 2px; }
+        .frh-input, .frh-textarea {
+          width: 100%; padding: 10px 14px;
+          border: 1.5px solid #e2e8f0; border-radius: 10px;
+          font-family: inherit; font-size: .9rem; color: #0f1b2d;
+          outline: none; direction: rtl;
+          transition: border-color .15s, box-shadow .15s;
+          box-sizing: border-box;
+        }
+        .frh-input:focus, .frh-textarea:focus {
+          border-color: #93c5fd;
+          box-shadow: 0 0 0 3px rgba(147,197,253,.2);
+        }
+        .frh-input.error { border-color: #fca5a5; }
+        .frh-input::placeholder, .frh-textarea::placeholder { color: #cbd5e1; }
+        .frh-textarea { resize: none; min-height: 72px; }
+        .frh-error { font-size: .8rem; color: #dc2626; margin-top: 4px; }
+
+        /* Category dropdown */
+        .frh-cat-wrap { position: relative; }
+        .frh-cat-btn {
+          width: 100%; padding: 10px 14px;
+          border: 1.5px solid #e2e8f0; border-radius: 10px;
+          background: #fff; font-family: inherit; font-size: .9rem;
+          color: #0f1b2d; cursor: pointer; direction: rtl;
+          display: flex; align-items: center; justify-content: space-between;
+          transition: border-color .15s;
+        }
+        .frh-cat-btn:hover, .frh-cat-btn:focus { border-color: #93c5fd; outline: none; }
+        .frh-cat-dd {
+          position: absolute; top: calc(100% + 4px); right: 0; left: 0;
+          background: #fff; border: 1px solid #e2e8f0;
+          border-radius: 12px; box-shadow: 0 8px 24px rgba(15,27,45,.13);
+          z-index: 600; overflow: hidden;
+        }
+        .frh-cat-opt {
+          padding: 10px 14px; font-size: .875rem; color: #334155;
+          cursor: pointer; direction: rtl; transition: background .12s;
+        }
+        .frh-cat-opt:hover { background: #eff6ff; color: #1d4ed8; }
+        .frh-cat-opt.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+
+        .frh-cat-hint {
+          font-size: .76rem; color: #94a3b8; margin-top: 5px;
+        }
+
+        /* Modal actions */
+        .frh-modal-actions {
+          display: flex; align-items: center; justify-content: flex-end;
+          gap: 10px; margin-top: 24px;
+        }
+        .frh-btn-cancel {
+          padding: 9px 20px; background: #f1f5f9; color: #64748b;
+          border: none; border-radius: 10px;
+          font-family: inherit; font-size: .875rem; font-weight: 600;
+          cursor: pointer; transition: background .15s;
+        }
+        .frh-btn-cancel:hover { background: #e2e8f0; }
+        .frh-btn-submit {
+          padding: 9px 24px; background: #2563eb; color: #fff;
+          border: none; border-radius: 10px;
+          font-family: inherit; font-size: .875rem; font-weight: 700;
+          cursor: pointer; transition: all .17s;
+          box-shadow: 0 2px 8px rgba(37,99,235,.28);
+          display: inline-flex; align-items: center; gap: 6px;
+        }
+        .frh-btn-submit:not(:disabled):hover { background: #1d4ed8; transform: translateY(-1px); }
+        .frh-btn-submit:disabled {
+          background: #e2e8f0;
+          color: #94a3b8;
+          cursor: not-allowed;
+          box-shadow: none;
+          transform: none;
+        }
+      `}</style>
+
+      <div className="frh-wrap">
+        {/* ── Header ── */}
+        <div className="frh-header">
+          <h1 className="frh-title">سجل التقارير المالية</h1>
+          <div className="frh-actions">
+            <button className="frh-btn-export" onClick={handleExport}>
+              <FileSpreadsheet size={16} />
+              تصدير بصيغة اكسل
+            </button>
+            <button className="frh-btn-create" onClick={() => setShowModal(true)}>
+              <Plus size={16} />
+              إنشاء تقرير
+            </button>
+          </div>
         </div>
-        
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">تحليل التقارير المالية</h1>
-          <p className="text-gray-600 dark:text-gray-400">نظرة عامة على التقارير</p>
+
+        {/* ── Table Card ── */}
+        <div className="frh-card">
+          <div className="frh-table-wrap">
+            <table className="frh-table">
+              <thead className="frh-thead">
+                <tr>
+                  <th style={{ width: 40 }}></th>
+                  <th>
+                    <span className="frh-th-inner">
+                      تاريخ آخر عملية <ChevronDown size={12} />
+                    </span>
+                  </th>
+                  <th>
+                    <span className="frh-th-inner">
+                      الفئة <ChevronDown size={12} />
+                    </span>
+                  </th>
+                  <th>
+                    <span className="frh-th-inner">
+                      إجمالي المبلغ <ChevronDown size={12} />
+                    </span>
+                  </th>
+                  <th>
+                    <span className="frh-th-inner">
+                      الحالة <ChevronDown size={12} />
+                    </span>
+                  </th>
+                  <th style={{ width: 40 }}></th>
+                </tr>
+              </thead>
+              <tbody className="frh-tbody">
+                {reports.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="frh-empty">
+                        <div className="frh-empty-icon">
+                          <FileText size={26} color="#94a3b8" />
+                        </div>
+                        <p>لا توجد تقارير حتى الآن</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  reports.map(report => {
+                    const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.draft
+                    return (
+                      <tr key={report.id} onClick={() => handleRowClick(report)}>
+                        <td>
+                          <button
+                            className="frh-del-btn"
+                            onClick={e => handleDelete(e, report.id)}
+                            title="حذف التقرير"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
+                        <td className="frh-td-date">{report.lastOperationDate}</td>
+                        <td className="frh-td-cat">{report.category}</td>
+                        <td className="frh-td-amt">{report.totalAmount}</td>
+                        <td>
+                          <span
+                            className="frh-status-badge"
+                            style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}
+                          >
+                            {cfg.label}
+                          </span>
+                        </td>
+                        <td style={{ width: 40 }}></td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Status Message */}
-      {message && (
-        <div className={`mb-6 p-3 rounded-lg text-sm ${
-          message.includes('نجاح') ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' : 
-          message.includes('خطأ') ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300' : 
-          'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
-        }`}>
-          {message}
+      {/* ══ Create Report Modal ══ */}
+      {showModal && (
+        <div className="frh-modal-overlay" onClick={e => { if (e.target === e.currentTarget) handleCloseModal() }}>
+          <div className="frh-modal">
+            {/* Modal Header */}
+            <div className="frh-modal-header">
+              <div className="frh-modal-title-wrap">
+                <div className="frh-modal-ico"><FileText size={18} /></div>
+                <span className="frh-modal-title">أنشئ تقريراً جديداً</span>
+              </div>
+              <button className="frh-modal-close" onClick={handleCloseModal}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Meta: user + date */}
+            <div className="frh-modal-meta">
+              <User size={14} />
+              <span>أحمد يحيى</span>
+              <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
+              <Calendar size={14} />
+              <span>
+                {new Date().toLocaleDateString('ar-EG', {
+                  year: 'numeric', month: 'numeric', day: 'numeric'
+                })}
+              </span>
+            </div>
+
+            {/* Title field */}
+            <div className="frh-field">
+              <label className="frh-label">
+                عنوان التقرير <span>*</span>
+              </label>
+              <input
+                className={`frh-input${formErr ? ' error' : ''}`}
+                placeholder="مثال: بيانات تسوية عهدة مبلغ"
+                value={newTitle}
+                onChange={e => { setNewTitle(e.target.value); setFormErr('') }}
+                autoFocus
+              />
+              {formErr && <div className="frh-error">{formErr}</div>}
+            </div>
+
+            {/* Description field */}
+            <div className="frh-field">
+              <label className="frh-label">الوصف <span>*</span></label>
+              <textarea
+                className="frh-textarea"
+                placeholder="وصف مختصر عن التقرير..."
+                value={newDesc}
+                onChange={e => setNewDesc(e.target.value)}
+              />
+            </div>
+
+            {/* Category field */}
+            <div className="frh-field">
+              <label className="frh-label">التصنيف <span>*</span></label>
+              <div className="frh-cat-wrap" ref={catRef}>
+                <button
+                  type="button"
+                  className="frh-cat-btn"
+                  onClick={() => setCatOpen(o => !o)}
+                >
+                  <span style={{ color: newCat ? '#0f1b2d' : '#cbd5e1' }}>
+                    {newCat || 'اختر تصنيفاً...'}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    style={{ flexShrink: 0, transition: 'transform .2s', transform: catOpen ? 'rotate(180deg)' : 'none' }}
+                  />
+                </button>
+                {catOpen && (
+                  <div className="frh-cat-dd">
+                    {CATEGORIES.map(c => (
+                      <div
+                        key={c}
+                        className={`frh-cat-opt${newCat === c ? ' active' : ''}`}
+                        onClick={() => { setNewCat(c); setCatOpen(false) }}
+                      >
+                        {c}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="frh-modal-actions">
+              <button className="frh-btn-cancel" onClick={handleCloseModal}>إلغاء</button>
+              <button
+                className="frh-btn-submit"
+                onClick={handleCreate}
+                disabled={!newTitle.trim() || !newDesc.trim() || !newCat}
+                title={!newTitle.trim() || !newDesc.trim() || !newCat ? 'يرجى تعبئة جميع الحقول أولاً' : undefined}
+              >
+                <Plus size={15} />
+                إنشاء التقرير
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      {/* Filters Section */}
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* From Date */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">من تاريخ</label>
-            <div className="relative">
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="اختر تاريخا"
-              />
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-            </div>
-          </div>
-
-          {/* To Date */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">إلى تاريخ</label>
-            <div className="relative">
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="اختر تاريخا"
-              />
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-            </div>
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">التصنيف</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">جميع التصنيفات</option>
-              <option value="subscriptions">اشتراكات</option>
-              <option value="expenses">مصروفات</option>
-              <option value="revenue">إيرادات</option>
-            </select>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">الحالة</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">جميع الحالات</option>
-              <option value="approved">معتمد</option>
-              <option value="pending">معلق</option>
-              <option value="rejected">مرفوض</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-4">
-          <button 
-            onClick={handleResetFilters}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-          >
-            <RotateCcw size={16} />
-            <span>إعادة ضبط الفلاتر</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Custody Data Card */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">بيانات العهدة</h3>
-          <div className="space-y-2">
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">£{custodyData.amount.toLocaleString()}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">إجمالي المبلغ</div>
-            <div className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4">{custodyData.reports}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">إجمالي تقارير العهدة</div>
-          </div>
-        </div>
-
-        {/* Expenses Summary Card */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">لخص المصروفات</h3>
-          <div className="space-y-2">
-            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">£{expensesData.amount.toLocaleString()}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">إجمالي المصروفات</div>
-            <div className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4">{expensesData.count}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">عدد المصروفات</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }

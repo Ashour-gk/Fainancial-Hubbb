@@ -2,16 +2,18 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import type { ColDef, ICellRendererParams } from 'ag-grid-community'
+import type { ColDef, ICellRendererParams, RowClickedEvent } from 'ag-grid-community'
 import { themeQuartz } from 'ag-grid-community'
 import {
   FileSpreadsheet, Plus, Trash2,
   FileText, X, ChevronDown, User, Calendar
 } from 'lucide-react'
+import ReportDetailView from './report-detail-view'
 
 /* ─── Types ─────────────────────────────────── */
 interface ReportRecord {
   id: number
+  title: string
   lastOperationDate: string
   category: string
   totalAmount: string
@@ -20,12 +22,12 @@ interface ReportRecord {
 
 /* ─── Static data ────────────────────────────── */
 const initialReports: ReportRecord[] = [
-  { id: 1, lastOperationDate: '1/15/2024', category: 'إشتراكات نت', totalAmount: '£4,750.00', status: 'approved' },
-  { id: 2, lastOperationDate: '2/1/2024', category: 'مشتريات متنوعة', totalAmount: '£12,500.00', status: 'review' },
-  { id: 3, lastOperationDate: '1/28/2024', category: 'عهدة', totalAmount: '£25,000.00', status: 'rejected' },
-  { id: 4, lastOperationDate: '12/1/2023', category: 'انتقالات', totalAmount: '£3,200.00', status: 'completed' },
-  { id: 5, lastOperationDate: '2/5/2024', category: 'مشتريات متنوعة', totalAmount: '£980.00', status: 'draft' },
-  { id: 6, lastOperationDate: '2/10/2024', category: 'إشتراكات نت', totalAmount: '£1,500.00', status: 'deleted' },
+  { id: 1, title: 'تقرير إشتراكات الإنترنت', lastOperationDate: '1/15/2024', category: 'إشتراكات نت', totalAmount: '£4,750.00', status: 'approved' },
+  { id: 2, title: 'تقرير مشتريات متنوعة يناير', lastOperationDate: '2/1/2024', category: 'مشتريات متنوعة', totalAmount: '£12,500.00', status: 'review' },
+  { id: 3, title: 'بيانات تسوية عهدة مبلغ', lastOperationDate: '1/28/2024', category: 'عهدة', totalAmount: '£25,000.00', status: 'rejected' },
+  { id: 4, title: 'تقرير انتقالات الموظفين', lastOperationDate: '12/1/2023', category: 'انتقالات', totalAmount: '£3,200.00', status: 'completed' },
+  { id: 5, title: 'مسودة مشتريات فبراير', lastOperationDate: '2/5/2024', category: 'مشتريات متنوعة', totalAmount: '£980.00', status: 'draft' },
+  { id: 6, title: 'تقرير الاشتراكات المحذوف', lastOperationDate: '2/10/2024', category: 'إشتراكات نت', totalAmount: '£1,500.00', status: 'deleted' },
 ]
 
 const STATUS_CONFIG = {
@@ -48,7 +50,7 @@ function StatusRenderer({ value }: ICellRendererParams) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      padding: '3px 12px', borderRadius: 20,
+      padding: '3px 7px', borderRadius: 10,
       fontSize: '.77rem', fontWeight: 700, whiteSpace: 'nowrap',
       background: cfg.bg, color: cfg.color,
     }}>
@@ -95,8 +97,11 @@ function CreateReportModal({
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' })
 
+  // Button is only enabled when the required title field has content
+  const isFormValid = title.trim().length > 0
+
   const handleSubmit = async () => {
-    if (!title.trim()) { setError('عنوان التقرير مطلوب'); return }
+    if (!isFormValid) { setError('عنوان التقرير مطلوب'); return }
     setError(''); setLoading(true)
     await new Promise(r => setTimeout(r, 600))
     onCreate(title.trim(), desc.trim(), cat)
@@ -140,9 +145,9 @@ function CreateReportModal({
         .crm-hint{font-size:.75rem;color:#94a3b8;margin-top:5px;direction:rtl}
         .crm-err{font-size:.78rem;color:#dc2626;margin-top:5px;direction:rtl}
         .crm-ft{display:flex;align-items:center;gap:12px;padding:16px 22px 20px;border-top:1px solid #f1f5f9;direction:rtl;flex-direction:row-reverse}
-        .crm-submit{display:inline-flex;align-items:center;gap:7px;padding:10px 24px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:700;cursor:pointer;transition:all .17s ease;box-shadow:0 2px 8px rgba(37,99,235,.28)}
-        .crm-submit:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px)}
-        .crm-submit:disabled{opacity:.65;cursor:not-allowed}
+        .crm-submit{display:inline-flex;align-items:center;gap:7px;padding:10px 24px;background:#cbd5e1;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:700;cursor:not-allowed;transition:background .25s ease,box-shadow .25s ease,transform .17s ease;box-shadow:none}
+        .crm-submit.active{background:#2563eb;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)}
+        .crm-submit.active:hover{background:#1d4ed8;transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,.38)}
         .crm-cancel{padding:10px 18px;background:transparent;border:none;color:#64748b;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;border-radius:10px;transition:background .15s,color .15s}
         .crm-cancel:hover{background:#f1f5f9;color:#334155}
         .crm-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
@@ -195,7 +200,12 @@ function CreateReportModal({
             </div>
           </div>
           <div className="crm-ft">
-            <button className="crm-submit" onClick={handleSubmit} disabled={loading}>
+            <button
+              className={`crm-submit${isFormValid && !loading ? ' active' : ''}`}
+              onClick={handleSubmit}
+              disabled={loading || !isFormValid}
+              title={!isFormValid ? 'يرجى ملء عنوان التقرير أولاً' : undefined}
+            >
               {loading ? <><div className="crm-spin" /> جاري الإنشاء...</> : <><Plus size={15} /> إنشاء التقرير</>}
             </button>
             <button className="crm-cancel" onClick={onClose}>إلغاء</button>
@@ -215,6 +225,7 @@ export default function ReportsView() {
   const [isExporting, setIsExporting] = useState(false)
   const [message, setMessage] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<ReportRecord | null>(null)
 
   const flash = (text: string) => { setMessage(text); setTimeout(() => setMessage(''), 3000) }
 
@@ -226,6 +237,7 @@ export default function ReportsView() {
   const handleCreate = (title: string, _desc: string, category: string) => {
     const newR: ReportRecord = {
       id: Math.max(...rowData.map(r => r.id), 0) + 1,
+      title,
       lastOperationDate: new Date().toLocaleDateString('en-US'),
       category: category || 'غير مصنف',
       totalAmount: '£0.00',
@@ -305,11 +317,23 @@ export default function ReportsView() {
     : message.includes('حذف') ? 'rv-toast-del'
       : 'rv-toast-ok'
 
+  /* ── Show detail view when a report is selected ── */
+  if (selectedReport) {
+    return (
+      <ReportDetailView
+        report={selectedReport}
+        onBack={() => setSelectedReport(null)}
+      />
+    )
+  }
+
   return (
     <>
       <style>{`
         /* ── Page styles ── */
         .rv-wrap { padding: 32px 36px 48px; background: #f5f7fa; min-height: 100vh; direction: rtl; font-family: 'Cairo','Segoe UI',Tahoma,sans-serif; }
+        @media(max-width:640px){ .rv-wrap { padding: 16px 14px 40px; } }
+        @media(max-width:640px){ .rv-title { font-size: 1.4rem !important; } }
         .rv-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:28px; }
         .rv-title { font-size:1.9rem; font-weight:800; color:#0f1b2d; letter-spacing:-.025em; }
         .rv-btns { display:flex; gap:10px; flex-direction:row-reverse; flex-wrap:wrap; }
@@ -384,12 +408,15 @@ export default function ReportsView() {
               columnDefs={colDefs}
               defaultColDef={defaultColDef}
               rowSelection="multiple"
-              suppressRowClickSelection={false}
+              suppressRowClickSelection={true}
               animateRows={true}
               pagination={true}
               paginationPageSize={10}
               enableRtl={true}
               context={{ onDelete: handleDelete }}
+              onRowClicked={(e: RowClickedEvent<ReportRecord>) => {
+                if (e.data) setSelectedReport(e.data)
+              }}
               noRowsOverlayComponent={() => (
                 <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                   <FileSpreadsheet size={48} style={{ marginBottom: 12, opacity: .35 }} />
