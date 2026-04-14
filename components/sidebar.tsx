@@ -441,9 +441,9 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           <div className="msb-divider" />
 
           <div className="msb-user">
-            <div className="msb-avatar">أح</div>
+            <div className="msb-avatar">MS</div>
             <div className="msb-user-info">
-              <div className="msb-user-name">أحمد يحيى</div>
+              <div className="msb-user-name">Mr. Sweilem</div>
               <div className="msb-user-role">مدير النظام</div>
             </div>
           </div>

@@ -368,7 +368,7 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
                       type="text"
                       name="fullName"
                       className="sv-input"
-                      placeholder="أحمد يحيى"
+                      placeholder="Mr. Sweilem"
                       value={formData.fullName}
                       onChange={handleInputChange}
                       disabled={loading}

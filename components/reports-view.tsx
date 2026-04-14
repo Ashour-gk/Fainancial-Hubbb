@@ -44,21 +44,6 @@ const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'ع�
 /* ══════════════════════════════════════════════
    AG GRID CELL RENDERERS
 ══════════════════════════════════════════════ */
-function StatusRenderer({ value }: ICellRendererParams) {
-  const cfg = STATUS_CONFIG[value as keyof typeof STATUS_CONFIG]
-  if (!cfg) return null
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      padding: '3px 7px', borderRadius: 10,
-      fontSize: '.77rem', fontWeight: 700, whiteSpace: 'nowrap',
-      background: cfg.bg, color: cfg.color,
-    }}>
-      {cfg.label}
-    </span>
-  )
-}
-
 function StatusRenderer({ value, data, context }: ICellRendererParams) {
   const [showDropdown, setShowDropdown] = useState(false)
   const cfg = STATUS_CONFIG[value as keyof typeof STATUS_CONFIG]
@@ -238,7 +223,7 @@ function CreateReportModal({
             <button className="crm-xbtn" onClick={onClose}><X size={17} /></button>
           </div>
           <div className="crm-meta">
-            <span className="crm-meta-item"><User size={14} /><span className="crm-meta-val">أحمد يحيى</span></span>
+            <span className="crm-meta-item"><User size={14} /><span className="crm-meta-val">Mr. Sweilem</span></span>
             <span className="crm-meta-item"><Calendar size={14} /><span className="crm-meta-val">{today}</span></span>
           </div>
           <div className="crm-body">

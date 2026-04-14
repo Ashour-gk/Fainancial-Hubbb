@@ -240,7 +240,7 @@ export default function ReportDetailView({ report, onBack }: ReportDetailProps) 
             <span className="rd-meta-item">
               <User size={14} color="#94a3b8" />
               <span>أنشئ بواسطة</span>
-              <span className="rd-meta-val">أحمد يحيى</span>
+              <span className="rd-meta-val">Mr. Sweilem</span>
             </span>
             <span className="rd-meta-item">
               <Calendar size={14} color="#94a3b8" />

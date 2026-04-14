@@ -312,7 +312,7 @@ export default function SettlementView() {
             </div>
             <div className="sv-meta-row">
               <span className="sv-meta-label"><User size={14} />أنشئ بواسطة</span>
-              <span className="sv-meta-val">أحمد يحيى</span>
+              <span className="sv-meta-val">Mr. Sweilem</span>
               <span className="sv-meta-label" style={{ marginRight: 'auto' }}><Calendar size={14} />تاريخ الإنشاء</span>
               <span className="sv-meta-val">١٥ يناير ٢٠٢٤</span>
             </div>
