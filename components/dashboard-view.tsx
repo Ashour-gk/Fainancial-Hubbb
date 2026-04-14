@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { RefreshCw, Calendar, ChevronDown } from 'lucide-react'
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface DashboardViewProps {
   onAddClick: () => void
@@ -19,6 +20,30 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
     setFromDate('')
     setToDate('')
   }
+
+  // Chart data
+  const monthlyData = [
+    { month: 'يناير', المصروفات: 45000, المعتمدة: 38000 },
+    { month: 'فبراير', المصروفات: 52000, المعتمدة: 45000 },
+    { month: 'مارس', المصروفات: 48000, المعتمدة: 42000 },
+    { month: 'إبريل', المصروفات: 61000, المعتمدة: 55000 },
+    { month: 'مايو', المصروفات: 58000, المعتمدة: 50000 },
+    { month: 'يونيو', المصروفات: 67000, المعتمدة: 62000 },
+  ]
+
+  const categoryData = [
+    { name: 'إشتراكات نت', value: 45000, color: '#3b82f6' },
+    { name: 'مشتريات متنوعة', value: 85000, color: '#10b981' },
+    { name: 'عهدة', value: 120000, color: '#f59e0b' },
+    { name: 'انتقالات', value: 35000, color: '#ef4444' },
+  ]
+
+  const statusData = [
+    { status: 'معتمد', عدد: 45, color: '#10b981' },
+    { status: 'قيد المراجعة', عدد: 28, color: '#f59e0b' },
+    { status: 'مسودة', عدد: 35, color: '#8b5cf6' },
+    { status: 'مرفوض', عدد: 8, color: '#ef4444' },
+  ]
 
   return (
     <>
@@ -262,6 +287,41 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
           background: #e8edf4;
           align-self: stretch;
         }
+
+        /* ── Charts Grid ── */
+        .db2-charts-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin-top: 20px;
+        }
+        @media(max-width: 1200px) {
+          .db2-charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .db2-chart-card {
+          background: #fff;
+          border: 1px solid #e8edf4;
+          border-radius: 16px;
+          padding: 24px 28px;
+          box-shadow: 0 1px 6px rgba(15,27,45,0.06);
+        }
+
+        .db2-chart-title {
+          font-size: 1rem;
+          font-weight: 800;
+          color: #1a1a2e;
+          margin-bottom: 20px;
+          text-align: right;
+          border-bottom: 1px solid #f1f5f9;
+          padding-bottom: 12px;
+        }
+
+        .db2-chart-container {
+          width: 100%;
+          height: 300px;
+          direction: rtl;
+        }
       `}</style>
 
       <div className="db2-wrap">
@@ -401,6 +461,78 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
                 <span className="db2-summary-value">38</span>
                 <span className="db2-summary-sub">إجمالي تقارير العهدة</span>
               </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Charts Grid ── */}
+        <div className="db2-charts-grid">
+          
+          {/* Monthly Trend Chart */}
+          <div className="db2-chart-card">
+            <div className="db2-chart-title">اتجاهات المصروفات الشهرية</div>
+            <div className="db2-chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e8edf4" />
+                  <XAxis dataKey="month" stroke="#94a3b8" style={{ fontSize: '0.8rem' }} />
+                  <YAxis stroke="#94a3b8" style={{ fontSize: '0.8rem' }} />
+                  <Tooltip 
+                    contentStyle={{ background: '#fff', border: '1px solid #e8edf4', borderRadius: '8px' }}
+                    formatter={(value) => `£${value.toLocaleString()}`}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="المصروفات" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} />
+                  <Line type="monotone" dataKey="المعتمدة" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Category Distribution Chart */}
+          <div className="db2-chart-card">
+            <div className="db2-chart-title">توزيع المصروفات حسب التصنيف</div>
+            <div className="db2-chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: £${value.toLocaleString()}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `£${value.toLocaleString()}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Status Distribution Chart */}
+          <div className="db2-chart-card">
+            <div className="db2-chart-title">توزيع التقارير حسب الحالة</div>
+            <div className="db2-chart-container">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e8edf4" />
+                  <XAxis dataKey="status" stroke="#94a3b8" style={{ fontSize: '0.8rem' }} />
+                  <YAxis stroke="#94a3b8" style={{ fontSize: '0.8rem' }} />
+                  <Tooltip formatter={(value) => value} />
+                  <Bar dataKey="عدد" fill="#3b82f6" radius={[8, 8, 0, 0]}>
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 

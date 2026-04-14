@@ -27,7 +27,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
   draft:     { label: 'مسودّة',       bg: '#f8fafc', color: '#94a3b8', border: '#cbd5e1' },
 }
 
-const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات', 'رواتب', 'صيانة']
+const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات']
 
 /* ─── Seed data ─── */
 const INITIAL_REPORTS: Report[] = [

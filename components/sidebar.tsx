@@ -44,7 +44,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const tabs = [
     { id: 'dashboard',  icon: <LayoutGrid size={20} />, label: 'لوحة المعلومات' },
     { id: 'financial',  icon: <FileText size={20} />,   label: 'التقارير المالية' },
-    { id: 'profile',    icon: <User size={20} />,       label: 'الملف الشخصي' },
+    { id: 'notifications',    icon: <User size={20} />,       label: 'الإشعارات' },
   ]
 
   const handleNav = (id: string) => {

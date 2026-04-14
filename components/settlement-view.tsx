@@ -177,6 +177,13 @@ export default function SettlementView() {
 
   const gridContext = useMemo(() => ({ deleteRow, updateRow, addAttachment }), [deleteRow, updateRow, addAttachment])
 
+  const categoryLabels: Record<string, string> = {
+    'internet': 'إشتراكات نت',
+    'misc': 'مشتريات متنوعة',
+    'custody': 'عهدة',
+    'other': 'أخرى',
+  }
+
   const colDefs = useMemo<ColDef<ExpenseRecord>[]>(() => [
     { headerName: 'م', colId: 'rowNum', width: 56, cellRenderer: RowNumRenderer, sortable: false, filter: false, resizable: false, cellStyle: () => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }) },
     { headerName: 'التاريخ', field: 'date', width: 190, cellRenderer: DateCellRenderer, sortable: false, filter: false, cellStyle: () => ({ display: 'flex', alignItems: 'center', padding: '2px 8px' }) },
@@ -260,7 +267,7 @@ export default function SettlementView() {
 
         {/* Page Header */}
         <div className="sv-page-header">
-          <h1 className="sv-page-title">تسوية عهدة مبلغ</h1>
+          <h1 className="sv-page-title">تسوية عهدة مبلغ – {categoryLabels[category]}</h1>
           <button className="sv-save-btn" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
           </button>
