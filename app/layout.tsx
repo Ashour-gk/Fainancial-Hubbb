@@ -11,9 +11,9 @@ const cairo = Cairo({
 })
 
 export const metadata: Metadata = {
-  title: 'Financial-Hub',
-  description: 'Financial reporting and management system',
-  generator: 'Financial-Hub',
+  title: 'Elsewedy Financial Hub',
+  description: 'نظام التقارير المالية - Elsewedy Financial reporting and management system',
+  generator: 'Elsewedy Financial-Hub',
   icons: {
     icon: [
       {
