@@ -35,7 +35,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
       <style>{`
         .lv-wrap {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0d1f35 0%, #1a2f4a 50%, #0f2442 100%);
+          background: linear-gradient(135deg, #b82228 0%, #c1272d 50%, #a91f24 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -57,7 +57,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         }
 
         .lv-header {
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background: linear-gradient(135deg, #c1272d, #a91f24);
           padding: 40px 24px;
           text-align: center;
         }
@@ -65,14 +65,19 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         .lv-logo {
           width: 56px;
           height: 56px;
-          background: rgba(255, 255, 255, 0.2);
+          background: #fff;
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 16px;
           font-size: 24px;
-          color: #fff;
+          color: #c1272d;
+        }
+        .lv-logo img {
+          width: 40px;
+          height: 40px;
+          object-fit: contain;
         }
 
         .lv-title {
@@ -128,8 +133,51 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         }
 
         .lv-input:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+          outline: none;
+          border-color: #c1272d;
+          box-shadow: inset 0 0 0 3px rgba(193, 39, 45, 0.06);
+          background: #fff;
+          color: #c1272d;
+        }
+
+        .lv-error {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 12px 14px;
+          background: #fee2e2;
+          border: 1px solid #fca5a5;
+          border-radius: 10px;
+          font-size: 0.875rem;
+          color: #c1272d;
+        }
+
+        .lv-error-icon {
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .lv-submit-btn {
+          padding: 12px;
+          background: linear-gradient(135deg, #c1272d, #a91f24);
+          color: #fff;
+          border: none;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: 0.95rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(193, 39, 45, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .lv-submit-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(193, 39, 45, 0.4);
         }
 
         .lv-input::placeholder {
@@ -297,7 +345,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         }
 
         .lv-signup-link {
-          color: #3b82f6;
+          color: #c1272d;
           text-decoration: none;
           font-weight: 700;
           cursor: pointer;
@@ -305,7 +353,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         }
 
         .lv-signup-link:hover {
-          color: #2563eb;
+          color: #a91f24;
         }
       `}</style>
 
@@ -314,8 +362,10 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
           <div className="lv-card">
             {/* Header */}
             <div className="lv-header">
-              <div className="lv-logo">📊</div>
-              <h1 className="lv-title">Financial Hub</h1>
+              <div className="lv-logo">
+                <img src="/elsewedy-logo.png" alt="Elsewedy Logo" />
+              </div>
+              <h1 className="lv-title">Elsewedy</h1>
               <p className="lv-subtitle">نظام التقارير المالية المتقدم</p>
             </div>
 

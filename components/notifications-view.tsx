@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Trash2, CheckCircle, AlertCircle, Info, Clock } from 'lucide-react'
+import { Trash2, CheckCircle, AlertCircle, Info, Clock, Bell } from 'lucide-react'
 
 export default function NotificationsView() {
   const [notifications, setNotifications] = useState([
@@ -64,9 +64,9 @@ export default function NotificationsView() {
       case 'warning':
         return { icon: <AlertCircle size={20} />, color: '#ea580c', bg: '#fed7aa' }
       case 'error':
-        return { icon: <AlertCircle size={20} />, color: '#dc2626', bg: '#fee2e2' }
+        return { icon: <AlertCircle size={20} />, color: '#c1272d', bg: '#fee2e2' }
       case 'info':
-        return { icon: <Info size={20} />, color: '#2563eb', bg: '#dbeafe' }
+        return { icon: <Info size={20} />, color: '#c1272d', bg: '#fee2e2' }
       default:
         return { icon: <Clock size={20} />, color: '#64748b', bg: '#f1f5f9' }
     }
@@ -247,21 +247,26 @@ export default function NotificationsView() {
         }
 
         .nv-filter-btn:hover {
-          border-color: #3b82f6;
-          color: #3b82f6;
+          border-color: #c1272d;
+          color: #c1272d;
         }
 
         .nv-filter-btn.active {
-          border-color: #3b82f6;
-          background: #eff6ff;
-          color: #3b82f6;
+          border-color: #c1272d;
+          background: #fee2e2;
+          color: #c1272d;
         }
       `}</style>
 
       <div className="nv-wrap">
         <div className="nv-header">
-          <h1 className="nv-title">الإشعارات</h1>
-          <p className="nv-subtitle">إدارة وعرض جميع الإشعارات والتنبيهات الخاصة بك</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Bell size={32} color="#c1272d" style={{ flexShrink: 0 }} />
+            <div>
+              <h1 className="nv-title">الإشعارات</h1>
+              <p className="nv-subtitle">إدارة وعرض جميع الإشعارات والتنبيهات الخاصة بك</p>
+            </div>
+          </div>
         </div>
 
         <div className="nv-filters">

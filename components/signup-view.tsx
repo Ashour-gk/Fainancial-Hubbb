@@ -93,7 +93,7 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
       <style>{`
         .sv-wrap {
           min-height: 100vh;
-          background: linear-gradient(135deg, #0d1f35 0%, #1a2f4a 50%, #0f2442 100%);
+          background: linear-gradient(135deg, #b82228 0%, #c1272d 50%, #a91f24 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -115,7 +115,7 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         }
 
         .sv-header {
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background: linear-gradient(135deg, #c1272d, #a91f24);
           padding: 32px 24px;
           text-align: center;
         }
@@ -123,14 +123,19 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         .sv-logo {
           width: 48px;
           height: 48px;
-          background: rgba(255, 255, 255, 0.2);
+          background: #fff;
           border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 12px;
           font-size: 20px;
-          color: #fff;
+          color: #c1272d;
+        }
+        .sv-logo img {
+          width: 36px;
+          height: 36px;
+          object-fit: contain;
         }
 
         .sv-title {
@@ -188,8 +193,68 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         }
 
         .sv-input:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+          outline: none;
+          border-color: #c1272d;
+          box-shadow: inset 0 0 0 3px rgba(193, 39, 45, 0.06);
+          background: #fff;
+          color: #c1272d;
+        }
+
+        .sv-password-strength-label {
+          font-size: 0.7rem;
+          color: #c1272d;
+          font-weight: 700;
+        }
+
+        .sv-checkbox-wrap {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          font-size: 0.8rem;
+          color: #c1272d;
+        }
+
+        .sv-submit-btn {
+          padding: 12px;
+          background: linear-gradient(135deg, #c1272d, #a91f24);
+          color: #fff;
+          border: none;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: 0.95rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 12px rgba(193, 39, 45, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .sv-submit-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(193, 39, 45, 0.4);
+        }
+
+        .sv-footer {
+          text-align: center;
+          padding: 20px 24px;
+          border-top: 1px solid #f1f5f9;
+          font-size: 0.875rem;
+          color: #64748b;
+        }
+
+        .sv-login-link {
+          color: #c1272d;
+          text-decoration: none;
+          font-weight: 700;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+
+        .sv-login-link:hover {
+          color: #a91f24;
         }
 
         .sv-input::placeholder {
@@ -344,9 +409,11 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
           <div className="sv-card">
             {/* Header */}
             <div className="sv-header">
-              <div className="sv-logo">📊</div>
+              <div className="sv-logo">
+                <img src="/elsewedy-logo.png" alt="Elsewedy Logo" />
+              </div>
               <h1 className="sv-title">إنشاء حساب</h1>
-              <p className="sv-subtitle">انضم إلى Financial Hub اليوم</p>
+              <p className="sv-subtitle">انضم إلى Elsewedy Financial Hub اليوم</p>
             </div>
 
             {/* Body */}

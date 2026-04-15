@@ -32,17 +32,17 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
   ]
 
   const categoryData = [
-    { name: 'إشتراكات نت', value: 45000, color: '#3b82f6' },
-    { name: 'مشتريات متنوعة', value: 85000, color: '#10b981' },
-    { name: 'عهدة', value: 120000, color: '#f59e0b' },
-    { name: 'انتقالات', value: 35000, color: '#ef4444' },
+    { name: 'إشتراكات نت', value: 45000, color: '#c1272d' },
+    { name: 'مشتريات متنوعة', value: 85000, color: '#d63136' },
+    { name: 'عهدة', value: 120000, color: '#a91f24' },
+    { name: 'انتقالات', value: 35000, color: '#e84750' },
   ]
 
   const statusData = [
-    { status: 'معتمد', عدد: 45, color: '#10b981' },
-    { status: 'قيد المراجعة', عدد: 28, color: '#f59e0b' },
-    { status: 'مسودة', عدد: 35, color: '#8b5cf6' },
-    { status: 'مرفوض', عدد: 8, color: '#ef4444' },
+    { status: 'معتمد', عدد: 45, color: '#c1272d' },
+    { status: 'قيد المراجعة', عدد: 28, color: '#d63136' },
+    { status: 'مسودة', عدد: 35, color: '#a91f24' },
+    { status: 'مرفوض', عدد: 8, color: '#e84750' },
   ]
 
   return (
@@ -86,7 +86,7 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
           align-items: center;
           gap: 8px;
           padding: 10px 20px;
-          background: #2563eb;
+          background: #c1272d;
           color: #fff;
           border: none;
           border-radius: 10px;
@@ -95,13 +95,13 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
           font-weight: 700;
           cursor: pointer;
           transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
-          box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+          box-shadow: 0 4px 14px rgba(193,39,45,0.3);
           white-space: nowrap;
         }
         .db2-refresh-btn:hover {
-          background: #1d4ed8;
+          background: #d63136;
           transform: translateY(-1px);
-          box-shadow: 0 6px 18px rgba(37,99,235,0.4);
+          box-shadow: 0 6px 18px rgba(193,39,45,0.4);
         }
         .db2-refresh-btn:active { transform: translateY(0); }
 
@@ -157,8 +157,8 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
         }
         .db2-filter-select:focus {
           outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+          border-color: #c1272d;
+          box-shadow: 0 0 0 3px rgba(193,39,45,0.12);
           background: #fff;
         }
         .db2-filter-select-ico {
@@ -190,8 +190,8 @@ export default function DashboardView({ onAddClick }: DashboardViewProps) {
         }
         .db2-date-input:focus {
           outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+          border-color: #c1272d;
+          box-shadow: 0 0 0 3px rgba(193,39,45,0.12);
           background: #fff;
         }
         .db2-date-input::placeholder { color: #94a3b8; }
