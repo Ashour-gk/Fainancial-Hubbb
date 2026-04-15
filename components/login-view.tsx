@@ -35,7 +35,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
       <style>{`
         .lv-wrap {
           min-height: 100vh;
-          background: linear-gradient(135deg, #b82228 0%, #c1272d 50%, #a91f24 100%);
+          background: #f5f5f5;
           display: flex;
           align-items: center;
           justify-content: center;
