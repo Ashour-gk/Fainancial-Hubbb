@@ -218,7 +218,9 @@ export default function SettlementView() {
         .sv-card-hd { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:10px; }
         .sv-card-hd-l { display:flex; align-items:center; gap:10px; }
         .sv-card-ico { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .sv-card-title { font-size:1rem; font-weight:700; color:#0f1b2d; }
+        .sv-card-title { font-size:1rem; font-weight:700; color:#0f1b2d; display: flex; align-items: center; gap: 10px; }
+
+        .sv-category-badge { display: inline-flex; align-items: center; padding: 5px 14px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
         .sv-card-sub { font-size:.75rem; color:#94a3b8; margin-top:1px; }
         .sv-status-badge { display:inline-flex; align-items:center; padding:5px 14px; border-radius:20px; font-size:.8rem; font-weight:700; background:#f1f5f9; color:#475569; border:1.5px solid #cbd5e1; user-select:none; }
         .sv-body { padding:20px 22px; }
@@ -267,7 +269,10 @@ export default function SettlementView() {
 
         {/* Page Header */}
         <div className="sv-page-header">
-          <h1 className="sv-page-title">بيانات تسوية {categoryLabels[category]}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h1 className="sv-page-title">بيانات تسوية</h1>
+            <span className="sv-category-badge">{categoryLabels[category]}</span>
+          </div>
           <button className="sv-save-btn" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
           </button>
@@ -288,7 +293,10 @@ export default function SettlementView() {
                 <FileText size={18} />
               </div>
               <div>
-                <div className="sv-card-title">بيانات تسوية {categoryLabels[category]}</div>
+                <div className="sv-card-title">
+                  بيانات تسوية
+                  <span className="sv-category-badge">{categoryLabels[category]}</span>
+                </div>
               </div>
             </div>
             <span className="sv-status-badge">مسودة</span>
