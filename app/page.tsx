@@ -7,6 +7,7 @@ import FinancialReportsView from '@/components/financial-reports-view'
 import NotificationsView from '@/components/notifications-view'
 import LoginView from '@/components/login-view'
 import SignUpView from '@/components/signup-view'
+import ReportLogView from '@/components/report-log-view'
 
 export default function AppShell() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)

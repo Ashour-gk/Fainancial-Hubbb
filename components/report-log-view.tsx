@@ -24,7 +24,7 @@ const INITIAL_ROWS: ExpenseRow[] = [
   { id: 2, date: '01/22/2024', amount: '', description: '', attachments: [] },
 ]
 
-const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات', 'رواتب', 'صيانة']
+const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات']
 
 const STATUS_CFG = {
   draft: { label: 'مسودة', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' },

@@ -46,6 +46,9 @@ export default function FinancialReportsView() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null)
   const [showModal, setShowModal]         = useState(false)
   const [catOpen, setCatOpen]             = useState(false)
+  const [searchText, setSearchText]       = useState('')
+  const [selectedIds, setSelectedIds]     = useState<Set<number>>(new Set())
+  const [statusDropdown, setStatusDropdown] = useState<number | null>(null)
 
   /* Modal form state */
   const [newTitle, setNewTitle]   = useState('')
@@ -55,6 +58,40 @@ export default function FinancialReportsView() {
 
   const catRef = useRef<HTMLDivElement>(null)
 
+  /* ── Filter reports (case-insensitive search) ── */
+  const filteredReports = reports.filter(r =>
+    r.title.toLowerCase().includes(searchText.toLowerCase()) ||
+    r.category.toLowerCase().includes(searchText.toLowerCase())
+  )
+
+  /* ── Checkbox handlers ── */
+  const toggleCheckbox = (id: number) => {
+    const newSet = new Set(selectedIds)
+    if (newSet.has(id)) newSet.delete(id)
+    else newSet.add(id)
+    setSelectedIds(newSet)
+  }
+
+  const toggleAllCheckboxes = () => {
+    if (selectedIds.size === filteredReports.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredReports.map(r => r.id)))
+    }
+  }
+
+  /* ── Status change handler ── */
+  const handleStatusChange = (reportId: number, newStatus: string) => {
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: newStatus } : r))
+    setStatusDropdown(null)
+  }
+
+  /* ── Get available status transitions ── */
+  const getAvailableStatuses = (currentStatus: string) => {
+    const allStatuses = Object.keys(STATUS_CONFIG)
+    return allStatuses.filter(s => s !== currentStatus)
+  }
+
   /* ── Open detail view ── */
   const handleRowClick = (report: Report) => setSelectedReport(report)
 
@@ -63,6 +100,9 @@ export default function FinancialReportsView() {
     e.stopPropagation()
     if (confirm('هل تريد حذف هذا التقرير؟')) {
       setReports(prev => prev.filter(r => r.id !== id))
+      const newSet = new Set(selectedIds)
+      newSet.delete(id)
+      setSelectedIds(newSet)
     }
   }
 
@@ -140,6 +180,22 @@ export default function FinancialReportsView() {
           gap: 14px;
           margin-bottom: 24px;
         }
+
+        /* Search bar */
+        .frh-search-box {
+          width: 100%; max-width: 340px;
+          padding: 10px 16px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: .875rem;
+          color: #0f1b2d;
+          outline: none;
+          direction: rtl;
+          transition: border-color .15s;
+        }
+        .frh-search-box:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147,197,253,.2); }
+        .frh-search-box::placeholder { color: #94a3b8; }
         .frh-title {
           font-size: 1.6rem;
           font-weight: 800;
@@ -209,6 +265,63 @@ export default function FinancialReportsView() {
           font-size: .8rem; font-weight: 700; white-space: nowrap;
           border: 1.5px solid;
         }
+        /* Checkbox */
+        .frh-checkbox {
+          width: 18px; height: 18px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 5px;
+          background: #fff;
+          cursor: pointer;
+          transition: all .15s;
+        }
+        .frh-checkbox:checked {
+          background: #2563eb;
+          border-color: #2563eb;
+        }
+
+        /* Status badge with dropdown */
+        .frh-status-wrapper {
+          position: relative;
+          display: inline-block;
+        }
+        .frh-status-badge-btn {
+          padding: 4px 14px;
+          border-radius: 20px;
+          font-size: .8rem;
+          font-weight: 700;
+          border: 1.5px solid;
+          background: none;
+          cursor: pointer;
+          transition: all .15s;
+          white-space: nowrap;
+        }
+        .frh-status-badge-btn:hover {
+          opacity: 0.85;
+          transform: scale(1.02);
+        }
+        .frh-status-dropdown {
+          position: absolute;
+          top: calc(100% + 6px);
+          right: 0;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          box-shadow: 0 8px 24px rgba(15,27,45,.15);
+          z-index: 400;
+          min-width: 160px;
+          overflow: hidden;
+        }
+        .frh-status-opt {
+          padding: 10px 14px;
+          font-size: .85rem;
+          color: #334155;
+          cursor: pointer;
+          transition: background .12s;
+          direction: rtl;
+        }
+        .frh-status-opt:hover { background: #f1f5f9; }
+        .frh-status-opt.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+
         .frh-del-btn {
           display: inline-flex; align-items: center; justify-content: center;
           width: 30px; height: 30px; border-radius: 8px;
@@ -363,6 +476,13 @@ export default function FinancialReportsView() {
         {/* ── Header ── */}
         <div className="frh-header">
           <h1 className="frh-title">سجل التقارير المالية</h1>
+          <input
+            type="text"
+            className="frh-search-box"
+            placeholder="ابحث عن التقرير أو الفئة..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+          />
           <div className="frh-actions">
             <button className="frh-btn-export" onClick={handleExport}>
               <FileSpreadsheet size={16} />
@@ -377,7 +497,15 @@ export default function FinancialReportsView() {
             <table className="frh-table">
               <thead className="frh-thead">
                 <tr>
-                  <th style={{ width: 40 }}></th>
+                  <th style={{ width: 40 }}>
+                    <input
+                      type="checkbox"
+                      className="frh-checkbox"
+                      checked={filteredReports.length > 0 && selectedIds.size === filteredReports.length}
+                      onChange={toggleAllCheckboxes}
+                      title="اختر الكل"
+                    />
+                  </th>
                   <th>
                     <span className="frh-th-inner">
                       تاريخ آخر عملية <ChevronDown size={12} />
@@ -402,23 +530,68 @@ export default function FinancialReportsView() {
                 </tr>
               </thead>
               <tbody className="frh-tbody">
-                {reports.length === 0 ? (
+                {filteredReports.length === 0 ? (
                   <tr>
                     <td colSpan={6}>
                       <div className="frh-empty">
                         <div className="frh-empty-icon">
                           <FileText size={26} color="#94a3b8" />
                         </div>
-                        <p>لا توجد تقارير حتى الآن</p>
+                        <p>{searchText ? 'لا توجد نتائج بحث' : 'لا توجد تقارير حتى الآن'}</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  reports.map(report => {
+                  filteredReports.map(report => {
                     const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.draft
+                    const isSelected = selectedIds.has(report.id)
+                    const showStatusDropdown = statusDropdown === report.id
                     return (
                       <tr key={report.id} onClick={() => handleRowClick(report)}>
-                        <td>
+                        <td onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="frh-checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleCheckbox(report.id)}
+                          />
+                        </td>
+                        <td className="frh-td-date">{report.lastOperationDate}</td>
+                        <td className="frh-td-cat">{report.category}</td>
+                        <td className="frh-td-amt">{report.totalAmount}</td>
+                        <td onClick={e => e.stopPropagation()}>
+                          <div className="frh-status-wrapper">
+                            <button
+                              className="frh-status-badge-btn"
+                              style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}
+                              onClick={() => setStatusDropdown(showStatusDropdown ? null : report.id)}
+                              onMouseEnter={() => {
+                                if (!showStatusDropdown) {
+                                  // Optional: show on hover
+                                }
+                              }}
+                            >
+                              {cfg.label}
+                            </button>
+                            {showStatusDropdown && (
+                              <div className="frh-status-dropdown">
+                                {getAvailableStatuses(report.status).map(status => {
+                                  const statusCfg = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]
+                                  return (
+                                    <div
+                                      key={status}
+                                      className="frh-status-opt"
+                                      onClick={() => handleStatusChange(report.id, status)}
+                                    >
+                                      {statusCfg.label}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td onClick={e => e.stopPropagation()}>
                           <button
                             className="frh-del-btn"
                             onClick={e => handleDelete(e, report.id)}
@@ -427,18 +600,6 @@ export default function FinancialReportsView() {
                             <Trash2 size={15} />
                           </button>
                         </td>
-                        <td className="frh-td-date">{report.lastOperationDate}</td>
-                        <td className="frh-td-cat">{report.category}</td>
-                        <td className="frh-td-amt">{report.totalAmount}</td>
-                        <td>
-                          <span
-                            className="frh-status-badge"
-                            style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}
-                          >
-                            {cfg.label}
-                          </span>
-                        </td>
-                        <td style={{ width: 40 }}></td>
                       </tr>
                     )
                   })

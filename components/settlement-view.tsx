@@ -181,7 +181,7 @@ export default function SettlementView() {
     'internet': 'إشتراكات نت',
     'misc': 'مشتريات متنوعة',
     'custody': 'عهدة',
-    'other': 'أخرى',
+    'transfers': 'انتقالات',
   }
 
   const colDefs = useMemo<ColDef<ExpenseRecord>[]>(() => [
@@ -267,7 +267,7 @@ export default function SettlementView() {
 
         {/* Page Header */}
         <div className="sv-page-header">
-          <h1 className="sv-page-title">تسوية عهدة مبلغ – {categoryLabels[category]}</h1>
+          <h1 className="sv-page-title">بيانات تسوية {categoryLabels[category]}</h1>
           <button className="sv-save-btn" onClick={handleSave} disabled={isSaving}>
             {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
           </button>
@@ -288,7 +288,7 @@ export default function SettlementView() {
                 <FileText size={18} />
               </div>
               <div>
-                <div className="sv-card-title">بيانات تسوية عهدة مبلغ</div>
+                <div className="sv-card-title">بيانات تسوية {categoryLabels[category]}</div>
               </div>
             </div>
             <span className="sv-status-badge">مسودة</span>
@@ -307,14 +307,12 @@ export default function SettlementView() {
                 <option value="internet">إشتراكات نت</option>
                 <option value="misc">مشتريات متنوعة</option>
                 <option value="custody">عهدة</option>
-                <option value="other">أخرى</option>
+                <option value="transfers">انتقالات</option>
               </select>
             </div>
             <div className="sv-meta-row">
               <span className="sv-meta-label"><User size={14} />أنشئ بواسطة</span>
               <span className="sv-meta-val">Mr. Sweilem</span>
-              <span className="sv-meta-label" style={{ marginRight: 'auto' }}><Calendar size={14} />تاريخ الإنشاء</span>
-              <span className="sv-meta-val">١٥ يناير ٢٠٢٤</span>
             </div>
           </div>
         </div>
