@@ -33,13 +33,14 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
   return (
     <>
       <style>{`
+        /* ── Login View Responsive Layout ── */
         .lv-wrap {
           min-height: 100vh;
           background: #f5f5f5;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
+          padding: 16px;
           direction: rtl;
           font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
         }
@@ -58,22 +59,37 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
 
         .lv-header {
           background: linear-gradient(135deg, #c1272d, #a91f24);
-          padding: 40px 24px;
+          padding: 32px 20px;
           text-align: center;
         }
 
+        @media (min-width: 480px) {
+          .lv-header {
+            padding: 40px 24px;
+          }
+        }
+
         .lv-logo {
-          width: 56px;
-          height: 56px;
+          width: 52px;
+          height: 52px;
           background: #fff;
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 16px;
+          margin: 0 auto 12px;
           font-size: 24px;
           color: #c1272d;
         }
+
+        @media (min-width: 480px) {
+          .lv-logo {
+            width: 56px;
+            height: 56px;
+            margin-bottom: 16px;
+          }
+        }
+
         .lv-logo img {
           width: 40px;
           height: 40px;
@@ -81,37 +97,51 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         }
 
         .lv-title {
-          font-size: 1.5rem;
+          font-size: 1.35rem;
           font-weight: 800;
           color: #fff;
           margin-bottom: 4px;
         }
 
+        @media (min-width: 480px) {
+          .lv-title {
+            font-size: 1.5rem;
+          }
+        }
+
         .lv-subtitle {
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           color: rgba(255, 255, 255, 0.85);
         }
 
         .lv-body {
-          padding: 32px 24px;
+          padding: 24px;
+        }
+
+        @media (min-width: 480px) {
+          .lv-body {
+            padding: 32px 24px;
+          }
         }
 
         .lv-form {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 14px;
         }
 
         .lv-field {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
         }
 
         .lv-label {
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           font-weight: 700;
           color: #374151;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
         }
 
         .lv-input-wrap {
@@ -120,7 +150,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
 
         .lv-input {
           width: 100%;
-          padding: 12px 16px 12px 40px;
+          padding: 10px 14px 10px 36px;
           border: 1.5px solid #e2e8f0;
           border-radius: 10px;
           font-family: inherit;
@@ -132,52 +162,18 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
           transition: border-color 0.2s, box-shadow 0.2s;
         }
 
+        @media (min-width: 480px) {
+          .lv-input {
+            padding: 12px 16px 12px 40px;
+            font-size: 0.875rem;
+          }
+        }
+
         .lv-input:focus {
           outline: none;
           border-color: #c1272d;
           box-shadow: inset 0 0 0 3px rgba(193, 39, 45, 0.06);
           background: #fff;
-          color: #c1272d;
-        }
-
-        .lv-error {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          padding: 12px 14px;
-          background: #fee2e2;
-          border: 1px solid #fca5a5;
-          border-radius: 10px;
-          font-size: 0.875rem;
-          color: #c1272d;
-        }
-
-        .lv-error-icon {
-          flex-shrink: 0;
-          margin-top: 2px;
-        }
-
-        .lv-submit-btn {
-          padding: 12px;
-          background: linear-gradient(135deg, #c1272d, #a91f24);
-          color: #fff;
-          border: none;
-          border-radius: 10px;
-          font-family: inherit;
-          font-size: 0.95rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(193, 39, 45, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .lv-submit-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(193, 39, 45, 0.4);
         }
 
         .lv-input::placeholder {
@@ -186,24 +182,39 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
 
         .lv-icon {
           position: absolute;
-          right: 12px;
+          right: 10px;
           top: 50%;
           transform: translateY(-50%);
           color: #94a3b8;
           pointer-events: none;
+          font-size: 0.9rem;
+        }
+
+        @media (min-width: 480px) {
+          .lv-icon {
+            right: 12px;
+            font-size: 1rem;
+          }
         }
 
         .lv-password-toggle {
           position: absolute;
-          left: 12px;
+          left: 10px;
           top: 50%;
           transform: translateY(-50%);
           background: none;
           border: none;
           color: #64748b;
           cursor: pointer;
-          padding: 4px;
+          padding: 3px;
           transition: color 0.2s;
+        }
+
+        @media (min-width: 480px) {
+          .lv-password-toggle {
+            left: 12px;
+            padding: 4px;
+          }
         }
 
         .lv-password-toggle:hover {
@@ -214,7 +225,16 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          font-size: 0.875rem;
+          gap: 8px;
+          font-size: 0.8rem;
+          flex-wrap: wrap;
+        }
+
+        @media (min-width: 480px) {
+          .lv-remember-forgot {
+            font-size: 0.875rem;
+            flex-wrap: nowrap;
+          }
         }
 
         .lv-remember {
@@ -226,10 +246,18 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
 
         .lv-remember input {
           cursor: pointer;
-          width: 16px;
-          height: 16px;
+          width: 14px;
+          height: 14px;
           border-radius: 4px;
           border: 1.5px solid #e2e8f0;
+          flex-shrink: 0;
+        }
+
+        @media (min-width: 480px) {
+          .lv-remember input {
+            width: 16px;
+            height: 16px;
+          }
         }
 
         .lv-forgot-link {
@@ -237,6 +265,7 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
           text-decoration: none;
           font-weight: 600;
           transition: color 0.2s;
+          white-space: nowrap;
         }
 
         .lv-forgot-link:hover {
@@ -246,41 +275,59 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         .lv-error {
           display: flex;
           align-items: flex-start;
-          gap: 10px;
-          padding: 12px 14px;
+          gap: 8px;
+          padding: 10px 12px;
           background: #fee2e2;
           border: 1px solid #fca5a5;
           border-radius: 10px;
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           color: #dc2626;
+          margin-bottom: 8px;
+        }
+
+        @media (min-width: 480px) {
+          .lv-error {
+            gap: 10px;
+            padding: 12px 14px;
+            font-size: 0.875rem;
+          }
         }
 
         .lv-error-icon {
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 1px;
         }
 
         .lv-submit-btn {
-          padding: 12px;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          padding: 11px;
+          background: linear-gradient(135deg, #c1272d, #a91f24);
           color: #fff;
           border: none;
           border-radius: 10px;
           font-family: inherit;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 12px rgba(193, 39, 45, 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 6px;
+          margin-top: 4px;
+        }
+
+        @media (min-width: 480px) {
+          .lv-submit-btn {
+            padding: 12px;
+            font-size: 0.95rem;
+            gap: 8px;
+          }
         }
 
         .lv-submit-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+          box-shadow: 0 6px 20px rgba(193, 39, 45, 0.4);
         }
 
         .lv-submit-btn:disabled {
@@ -292,9 +339,16 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin: 20px 0;
-          font-size: 0.875rem;
+          margin: 16px 0;
+          font-size: 0.8rem;
           color: #cbd5e1;
+        }
+
+        @media (min-width: 480px) {
+          .lv-divider {
+            margin: 20px 0;
+            font-size: 0.875rem;
+          }
         }
 
         .lv-divider::before,
@@ -307,24 +361,39 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
 
         .lv-social-buttons {
           display: flex;
-          gap: 12px;
-          margin-bottom: 20px;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+
+        @media (min-width: 480px) {
+          .lv-social-buttons {
+            gap: 12px;
+            margin-bottom: 20px;
+          }
         }
 
         .lv-social-btn {
           flex: 1;
-          padding: 10px;
+          padding: 9px;
           border: 1.5px solid #e2e8f0;
           background: #fff;
           border-radius: 10px;
           font-family: inherit;
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           cursor: pointer;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 4px;
+        }
+
+        @media (min-width: 480px) {
+          .lv-social-btn {
+            padding: 10px;
+            font-size: 0.875rem;
+            gap: 6px;
+          }
         }
 
         .lv-social-btn:hover {
@@ -333,15 +402,28 @@ export default function LoginView({ onNavigateToSignUp, onLoginSuccess }: {
         }
 
         .lv-footer {
-          padding: 0 24px 24px;
+          padding: 16px 20px;
           text-align: center;
-          font-size: 0.875rem;
+          font-size: 0.8rem;
           color: #64748b;
           border-top: 1px solid #f1f5f9;
         }
 
+        @media (min-width: 480px) {
+          .lv-footer {
+            padding: 0 24px 24px;
+            font-size: 0.875rem;
+          }
+        }
+
         .lv-footer-text {
-          margin-bottom: 8px;
+          margin-bottom: 6px;
+        }
+
+        @media (min-width: 480px) {
+          .lv-footer-text {
+            margin-bottom: 8px;
+          }
         }
 
         .lv-signup-link {

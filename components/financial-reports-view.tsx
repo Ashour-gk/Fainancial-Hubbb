@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
-  Plus, Trash2, FileText, ChevronDown, User, Calendar, X, FileSpreadsheet
+  Plus, Trash2, FileSpreadsheet, ChevronDown, X
 } from 'lucide-react'
+import { AgGridReact } from 'ag-grid-react'
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-quartz.css'
 import ReportDetailView from './report-detail-view'
 
 /* ─── Types ─── */
@@ -15,6 +18,7 @@ interface Report {
   lastOperationDate: string
   totalAmount: string
   createdBy: string
+  selected?: boolean
 }
 
 /* ─── Status config ─── */
@@ -41,34 +45,166 @@ const INITIAL_REPORTS: Report[] = [
 
 let nextId = INITIAL_REPORTS.length + 1
 
-export default function FinancialReportsView() {
-  const [reports, setReports]             = useState<Report[]>(INITIAL_REPORTS)
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
-  const [showModal, setShowModal]         = useState(false)
-  const [catOpen, setCatOpen]             = useState(false)
+/* ─── Custom Cell Renderers ─── */
+const CheckboxCellRenderer = (props: any) => (
+  <input
+    type="checkbox"
+    checked={props.data.selected || false}
+    onChange={() => props.onCheckboxChange?.(props.data.id)}
+    style={{
+      width: '18px',
+      height: '18px',
+      cursor: 'pointer',
+      accentColor: '#2563eb',
+    }}
+  />
+)
 
-  /* Modal form state */
-  const [newTitle, setNewTitle]   = useState('')
-  const [newDesc, setNewDesc]     = useState('')
-  const [newCat, setNewCat]       = useState('')
-  const [formErr, setFormErr]     = useState('')
+const StatusCellRenderer = (props: any) => {
+  const cfg = STATUS_CONFIG[props.value] || STATUS_CONFIG.draft
+  const [showDropdown, setShowDropdown] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
-  const catRef = useRef<HTMLDivElement>(null)
-
-  /* ── Open detail view ── */
-  const handleRowClick = (report: Report) => setSelectedReport(report)
-
-  /* ── Delete report ── */
-  const handleDelete = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation()
-    if (confirm('هل تريد حذف هذا التقرير؟')) {
-      setReports(prev => prev.filter(r => r.id !== id))
-    }
+  const handleStatusChange = (newStatus: string) => {
+    props.onStatusChange?.(props.data.id, newStatus)
+    setShowDropdown(false)
   }
 
-  /* ── Create report ── */
+  const availableStatuses = Object.keys(STATUS_CONFIG).filter(s => s !== props.value)
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        style={{
+          padding: '4px 14px',
+          borderRadius: '20px',
+          fontSize: '0.8rem',
+          fontWeight: '700',
+          border: `1.5px solid ${cfg.border}`,
+          background: cfg.bg,
+          color: cfg.color,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          width: '100%',
+          textAlign: 'center',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+      >
+        {cfg.label}
+      </button>
+      {showDropdown && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            background: '#fff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(15,27,45,.15)',
+            zIndex: 400,
+            minWidth: '160px',
+            overflow: 'hidden',
+          }}
+        >
+          {availableStatuses.map(status => {
+            const statusCfg = STATUS_CONFIG[status]
+            return (
+              <div
+                key={status}
+                onClick={() => handleStatusChange(status)}
+                style={{
+                  padding: '10px 14px',
+                  fontSize: '0.85rem',
+                  color: '#334155',
+                  cursor: 'pointer',
+                  transition: 'background 0.12s',
+                  textAlign: 'right',
+                  direction: 'rtl',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                {statusCfg.label}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const ActionsCellRenderer = (props: any) => (
+  <button
+    onClick={(e) => {
+      e.stopPropagation()
+      if (confirm('هل تريد حذف هذا التقرير؟')) {
+        props.onDelete?.(props.data.id)
+      }
+    }}
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '30px',
+      height: '30px',
+      borderRadius: '8px',
+      border: 'none',
+      background: 'transparent',
+      color: '#ef4444',
+      cursor: 'pointer',
+      transition: 'background 0.13s',
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.background = '#fee2e2')}
+    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+  >
+    <Trash2 size={15} />
+  </button>
+)
+
+export default function FinancialReportsView() {
+  const [reports, setReports] = useState<Report[]>(INITIAL_REPORTS)
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [catOpen, setCatOpen] = useState(false)
+  const [searchText, setSearchText] = useState('')
+
+  const [newTitle, setNewTitle] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+  const [newCat, setNewCat] = useState('')
+  const [formErr, setFormErr] = useState('')
+
+  const catRef = useRef<HTMLDivElement>(null)
+  const gridRef = useRef<AgGridReact>(null)
+
+  const filteredReports = useMemo(() => {
+    return reports.filter(r =>
+      r.title.toLowerCase().includes(searchText.toLowerCase()) ||
+      r.category.toLowerCase().includes(searchText.toLowerCase())
+    )
+  }, [reports, searchText])
+
+  const handleCheckboxChange = (id: number) => {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, selected: !r.selected } : r))
+  }
+
+  const handleStatusChange = (reportId: number, newStatus: string) => {
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: newStatus } : r))
+  }
+
+  const handleDelete = (id: number) => {
+    setReports(prev => prev.filter(r => r.id !== id))
+  }
+
   const handleCreate = () => {
-    if (!newTitle.trim()) { setFormErr('عنوان التقرير مطلوب'); return }
+    if (!newTitle.trim()) {
+      setFormErr('عنوان التقرير مطلوب')
+      return
+    }
     const now = new Date()
     const dateStr = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`
     const newReport: Report = {
@@ -82,56 +218,103 @@ export default function FinancialReportsView() {
     }
     setReports(prev => [newReport, ...prev])
     setShowModal(false)
-    setNewTitle(''); setNewDesc(''); setNewCat(''); setFormErr('')
-    // Immediately open the detail view
+    setNewTitle('')
+    setNewDesc('')
+    setNewCat('')
+    setFormErr('')
     setSelectedReport(newReport)
   }
 
-  const handleCloseModal = () => {
-    setShowModal(false)
-    setNewTitle(''); setNewDesc(''); setNewCat(''); setFormErr('')
-  }
-
-  /* ── Export to Excel (CSV) ── */
   const handleExport = () => {
     const headers = ['م', 'تاريخ آخر عملية', 'الفئة', 'إجمالي المبلغ', 'الحالة']
     const rows = reports.map((r, i) => [
-      i + 1, r.lastOperationDate, r.category, r.totalAmount,
+      i + 1,
+      r.lastOperationDate,
+      r.category,
+      r.totalAmount,
       STATUS_CONFIG[r.status]?.label ?? r.status,
     ])
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url
+    const a = document.createElement('a')
+    a.href = url
     a.download = `financial_reports_${new Date().toISOString().split('T')[0]}.csv`
-    a.click(); URL.revokeObjectURL(url)
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
-  /* ── If a report is selected, show its detail page ── */
+  const columnDefs = [
+    {
+      headerName: '',
+      field: 'selected',
+      width: 50,
+      cellRenderer: CheckboxCellRenderer,
+      sortable: false,
+      filter: false,
+      suppressMenu: true,
+    },
+    {
+      headerName: 'تاريخ آخر عملية',
+      field: 'lastOperationDate',
+      flex: 1,
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      headerName: 'الفئة',
+      field: 'category',
+      flex: 1,
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      headerName: 'إجمالي المبلغ',
+      field: 'totalAmount',
+      flex: 1,
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      headerName: 'الحالة',
+      field: 'status',
+      width: 180,
+      cellRenderer: StatusCellRenderer,
+      sortable: false,
+      filter: false,
+      suppressMenu: true,
+    },
+    {
+      headerName: '',
+      field: 'actions',
+      width: 50,
+      cellRenderer: ActionsCellRenderer,
+      sortable: false,
+      filter: false,
+      suppressMenu: true,
+    },
+  ]
+
   if (selectedReport) {
     return (
-      <ReportDetailView
-        report={selectedReport}
-        onBack={() => setSelectedReport(null)}
-      />
+      <ReportDetailView report={selectedReport} onBack={() => setSelectedReport(null)} />
     )
   }
 
-  /* ── List View ── */
   return (
     <>
       <style>{`
         /* ══ Financial Reports Hub ══ */
         .frh-wrap {
-          padding: 28px 32px 60px;
+          padding: 28px 16px 60px;
           background: #f5f7fa;
           min-height: 100vh;
           direction: rtl;
           font-family: 'Cairo','Segoe UI',Tahoma,sans-serif;
         }
-        @media(max-width:640px){ .frh-wrap{ padding:18px 14px 60px } }
+        @media(max-width:768px) { .frh-wrap { padding: 18px 12px 60px; } }
+        @media(max-width:480px) { .frh-wrap { padding: 14px 10px 60px; } }
 
-        /* Header */
         .frh-header {
           display: flex;
           align-items: center;
@@ -140,214 +323,325 @@ export default function FinancialReportsView() {
           gap: 14px;
           margin-bottom: 24px;
         }
+        @media(max-width:768px) {
+          .frh-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+        }
+
         .frh-title {
           font-size: 1.6rem;
           font-weight: 800;
           color: #0f1b2d;
           letter-spacing: -.02em;
+          flex: 1;
+          min-width: 200px;
         }
-        .frh-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        @media(max-width:768px) { .frh-title { font-size: 1.4rem; } }
+        @media(max-width:480px) { .frh-title { font-size: 1.2rem; } }
 
-        /* Buttons */
-        .frh-btn-create {
-          display: inline-flex; align-items: center; gap: 7px;
-          padding: 9px 20px;
-          background: #2563eb; color: #fff;
-          border: none; border-radius: 10px;
-          font-family: inherit; font-size: .875rem; font-weight: 700;
-          cursor: pointer; transition: all .17s;
-          box-shadow: 0 2px 10px rgba(37,99,235,.28);
+        .frh-search-box {
+          width: 100%;
+          max-width: 340px;
+          padding: 10px 16px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: .875rem;
+          color: #0f1b2d;
+          outline: none;
+          direction: rtl;
+          transition: border-color .15s;
         }
-        .frh-btn-create:hover { background: #1d4ed8; transform: translateY(-1px); }
+        @media(max-width:768px) { .frh-search-box { max-width: 100%; } }
+        .frh-search-box:focus {
+          border-color: #93c5fd;
+          box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.2);
+        }
+        .frh-search-box::placeholder { color: #94a3b8; }
+
+        .frh-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        @media(max-width:768px) { .frh-actions { width: 100%; } }
+
         .frh-btn-export {
-          display: inline-flex; align-items: center; gap: 7px;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
           padding: 9px 18px;
-          background: #fff; color: #16a34a;
-          border: 1.5px solid #bbf7d0; border-radius: 10px;
-          font-family: inherit; font-size: .875rem; font-weight: 700;
-          cursor: pointer; transition: all .17s;
+          background: #fff;
+          color: #16a34a;
+          border: 1.5px solid #bbf7d0;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: .875rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all .17s;
+          white-space: nowrap;
         }
-        .frh-btn-export:hover { background: #f0fdf4; border-color: #86efac; }
+        .frh-btn-export:hover {
+          background: #f0fdf4;
+          border-color: #86efac;
+        }
+        @media(max-width:768px) { .frh-btn-export { flex: 1; justify-content: center; } }
 
-        /* Table card */
         .frh-card {
           background: #fff;
           border: 1px solid #e2e8f0;
           border-radius: 18px;
-          box-shadow: 0 2px 14px rgba(15,27,45,.06);
+          box-shadow: 0 2px 14px rgba(15, 27, 45, 0.06);
           overflow: hidden;
+          margin-bottom: 24px;
         }
-        .frh-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .frh-table {
-          width: 100%; border-collapse: collapse; min-width: 560px;
-        }
-        .frh-thead th {
-          padding: 12px 18px;
-          font-size: .78rem; font-weight: 700; color: #94a3b8;
-          text-align: right;
-          border-bottom: 1px solid #f1f5f9;
-          background: #fafafa;
-          white-space: nowrap;
-        }
-        .frh-thead th .frh-th-inner {
-          display: inline-flex; align-items: center; gap: 5px;
-        }
-        .frh-tbody tr {
-          border-bottom: 1px solid #f8fafc;
-          transition: background .13s;
-          cursor: pointer;
-        }
-        .frh-tbody tr:last-child { border-bottom: none; }
-        .frh-tbody tr:hover { background: #f0f7ff; }
-        .frh-tbody td { padding: 13px 18px; vertical-align: middle; }
-        .frh-td-date { font-size: .875rem; color: #334155; font-weight: 500; }
-        .frh-td-cat  { font-size: .875rem; color: #334155; font-weight: 600; }
-        .frh-td-amt  { font-size: .9rem;   color: #0f1b2d; font-weight: 700; }
-        .frh-status-badge {
-          display: inline-flex; align-items: center;
-          padding: 4px 14px; border-radius: 20px;
-          font-size: .8rem; font-weight: 700; white-space: nowrap;
-          border: 1.5px solid;
-        }
-        .frh-del-btn {
-          display: inline-flex; align-items: center; justify-content: center;
-          width: 30px; height: 30px; border-radius: 8px;
-          border: none; background: transparent; color: #ef4444;
-          cursor: pointer; transition: background .13s;
-        }
-        .frh-del-btn:hover { background: #fee2e2; }
 
-        /* Empty state */
-        .frh-empty {
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          padding: 60px 20px; color: #94a3b8; gap: 12px;
+        .ag-theme-quartz {
+          --ag-font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+          --ag-font-size: 14px;
+          --ag-header-height: 48px;
+          --ag-row-height: 46px;
+          --ag-header-foreground-color: #94a3b8;
+          --ag-header-background-color: #fafafa;
+          --ag-odd-row-background-color: #fff;
+          --ag-grid-size: 6px;
+          --ag-borders: 1px solid #f1f5f9;
         }
-        .frh-empty-icon { width: 56px; height: 56px; border-radius: 16px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
-        .frh-empty p { font-size: .9rem; font-weight: 600; margin: 0; }
+
+        .ag-theme-quartz .ag-header-cell {
+          padding: 0 16px;
+          font-weight: 700;
+          font-size: 0.78rem;
+          white-space: nowrap;
+          text-align: right;
+          direction: rtl;
+        }
+
+        .ag-theme-quartz .ag-cell {
+          padding: 0 16px;
+          direction: rtl;
+          text-align: right;
+        }
+
+        .ag-theme-quartz .ag-row:hover {
+          background-color: #f0f7ff !important;
+        }
+
+        .ag-theme-quartz .ag-row {
+          border-bottom: 1px solid #f8fafc;
+        }
+
+        @media(max-width:768px) {
+          .ag-theme-quartz {
+            --ag-font-size: 13px;
+            --ag-row-height: 42px;
+            --ag-header-height: 44px;
+          }
+          .ag-theme-quartz .ag-header-cell,
+          .ag-theme-quartz .ag-cell {
+            padding: 0 8px;
+          }
+        }
 
         /* ══ Modal ══ */
         .frh-modal-overlay {
-          position: fixed; inset: 0;
-          background: rgba(10,20,40,.45);
+          position: fixed;
+          inset: 0;
+          background: rgba(10, 20, 40, 0.45);
           backdrop-filter: blur(3px);
           z-index: 500;
-          display: flex; align-items: center; justify-content: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: 16px;
-          animation: frh-fadein .18s ease;
+          animation: frh-fadein 0.18s ease;
         }
-        @keyframes frh-fadein { from{opacity:0} to{opacity:1} }
+        @keyframes frh-fadein { from { opacity: 0; } to { opacity: 1; } }
+
         .frh-modal {
           background: #fff;
           border-radius: 20px;
-          box-shadow: 0 20px 60px rgba(10,20,40,.2);
-          width: 100%; max-width: 470px;
+          box-shadow: 0 20px 60px rgba(10, 20, 40, 0.2);
+          width: 100%;
+          max-width: 470px;
           padding: 28px;
           direction: rtl;
-          font-family: 'Cairo','Segoe UI',Tahoma,sans-serif;
-          animation: frh-slideup .22s cubic-bezier(.4,0,.2,1);
+          font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+          animation: frh-slideup 0.22s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
         }
-        @keyframes frh-slideup { from{transform:translateY(20px);opacity:0} to{transform:none;opacity:1} }
+        @keyframes frh-slideup { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+        @media(max-width:480px) { .frh-modal { max-width: 100%; padding: 20px; } }
 
         .frh-modal-header {
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
           margin-bottom: 22px;
         }
-        .frh-modal-title-wrap { display: flex; align-items: center; gap: 10px; }
-        .frh-modal-ico {
-          width: 38px; height: 38px; border-radius: 10px;
-          background: #eff6ff; color: #2563eb;
-          display: flex; align-items: center; justify-content: center;
+
+        .frh-modal-title-wrap {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
-        .frh-modal-title { font-size: 1.15rem; font-weight: 800; color: #0f1b2d; }
+
+        .frh-modal-ico {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: #eff6ff;
+          color: #2563eb;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .frh-modal-title {
+          font-size: 1.15rem;
+          font-weight: 800;
+          color: #0f1b2d;
+        }
+
         .frh-modal-close {
-          width: 32px; height: 32px; border-radius: 8px;
-          border: none; background: #f1f5f9; color: #64748b;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: background .15s;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          border: none;
+          background: #f1f5f9;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.15s;
         }
         .frh-modal-close:hover { background: #e2e8f0; color: #0f1b2d; }
 
-        /* Meta line (user + date) */
-        .frh-modal-meta {
-          display: flex; align-items: center; gap: 6px;
-          font-size: .82rem; color: #64748b;
-          background: #f8fafc; border-radius: 9px;
-          padding: 8px 14px; margin-bottom: 20px;
-        }
-        .frh-modal-meta svg { color: #94a3b8; }
-
-        /* Fields */
         .frh-field { margin-bottom: 16px; }
+
         .frh-label {
-          display: block; font-size: .82rem; font-weight: 700;
-          color: #334155; margin-bottom: 6px;
+          display: block;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #334155;
+          margin-bottom: 6px;
         }
         .frh-label span { color: #ef4444; margin-right: 2px; }
-        .frh-input, .frh-textarea {
-          width: 100%; padding: 10px 14px;
-          border: 1.5px solid #e2e8f0; border-radius: 10px;
-          font-family: inherit; font-size: .9rem; color: #0f1b2d;
-          outline: none; direction: rtl;
-          transition: border-color .15s, box-shadow .15s;
+
+        .frh-input,
+        .frh-textarea {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: 0.9rem;
+          color: #0f1b2d;
+          outline: none;
+          direction: rtl;
+          transition: border-color 0.15s, box-shadow 0.15s;
           box-sizing: border-box;
         }
-        .frh-input:focus, .frh-textarea:focus {
+        .frh-input:focus,
+        .frh-textarea:focus {
           border-color: #93c5fd;
-          box-shadow: 0 0 0 3px rgba(147,197,253,.2);
+          box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.2);
         }
         .frh-input.error { border-color: #fca5a5; }
-        .frh-input::placeholder, .frh-textarea::placeholder { color: #cbd5e1; }
-        .frh-textarea { resize: none; min-height: 72px; }
-        .frh-error { font-size: .8rem; color: #dc2626; margin-top: 4px; }
+        .frh-input::placeholder,
+        .frh-textarea::placeholder { color: #cbd5e1; }
 
-        /* Category dropdown */
+        .frh-textarea { resize: none; min-height: 72px; }
+        .frh-error { font-size: 0.8rem; color: #dc2626; margin-top: 4px; }
+
         .frh-cat-wrap { position: relative; }
+
         .frh-cat-btn {
-          width: 100%; padding: 10px 14px;
-          border: 1.5px solid #e2e8f0; border-radius: 10px;
-          background: #fff; font-family: inherit; font-size: .9rem;
-          color: #0f1b2d; cursor: pointer; direction: rtl;
-          display: flex; align-items: center; justify-content: space-between;
-          transition: border-color .15s;
+          width: 100%;
+          padding: 10px 14px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          background: #fff;
+          font-family: inherit;
+          font-size: 0.9rem;
+          color: #0f1b2d;
+          cursor: pointer;
+          direction: rtl;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          transition: border-color 0.15s;
         }
-        .frh-cat-btn:hover, .frh-cat-btn:focus { border-color: #93c5fd; outline: none; }
+        .frh-cat-btn:hover,
+        .frh-cat-btn:focus { border-color: #93c5fd; outline: none; }
+
         .frh-cat-dd {
-          position: absolute; top: calc(100% + 4px); right: 0; left: 0;
-          background: #fff; border: 1px solid #e2e8f0;
-          border-radius: 12px; box-shadow: 0 8px 24px rgba(15,27,45,.13);
-          z-index: 600; overflow: hidden;
+          position: absolute;
+          top: calc(100% + 4px);
+          right: 0;
+          left: 0;
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(15, 27, 45, 0.13);
+          z-index: 600;
+          overflow: hidden;
         }
+
         .frh-cat-opt {
-          padding: 10px 14px; font-size: .875rem; color: #334155;
-          cursor: pointer; direction: rtl; transition: background .12s;
+          padding: 10px 14px;
+          font-size: 0.875rem;
+          color: #334155;
+          cursor: pointer;
+          direction: rtl;
+          transition: background 0.12s;
         }
         .frh-cat-opt:hover { background: #eff6ff; color: #1d4ed8; }
         .frh-cat-opt.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
 
-        .frh-cat-hint {
-          font-size: .76rem; color: #94a3b8; margin-top: 5px;
-        }
-
-        /* Modal actions */
         .frh-modal-actions {
-          display: flex; align-items: center; justify-content: flex-end;
-          gap: 10px; margin-top: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 24px;
         }
+        @media(max-width:480px) { .frh-modal-actions { flex-direction: column-reverse; width: 100%; } }
+
         .frh-btn-cancel {
-          padding: 9px 20px; background: #f1f5f9; color: #64748b;
-          border: none; border-radius: 10px;
-          font-family: inherit; font-size: .875rem; font-weight: 600;
-          cursor: pointer; transition: background .15s;
+          padding: 9px 20px;
+          background: #f1f5f9;
+          color: #64748b;
+          border: none;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.15s;
         }
         .frh-btn-cancel:hover { background: #e2e8f0; }
+        @media(max-width:480px) { .frh-btn-cancel { width: 100%; } }
+
         .frh-btn-submit {
-          padding: 9px 24px; background: #2563eb; color: #fff;
-          border: none; border-radius: 10px;
-          font-family: inherit; font-size: .875rem; font-weight: 700;
-          cursor: pointer; transition: all .17s;
-          box-shadow: 0 2px 8px rgba(37,99,235,.28);
-          display: inline-flex; align-items: center; gap: 6px;
+          padding: 9px 24px;
+          background: #2563eb;
+          color: #fff;
+          border: none;
+          border-radius: 10px;
+          font-family: inherit;
+          font-size: 0.875rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.17s;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
         }
         .frh-btn-submit:not(:disabled):hover { background: #1d4ed8; transform: translateY(-1px); }
         .frh-btn-submit:disabled {
@@ -357,12 +651,20 @@ export default function FinancialReportsView() {
           box-shadow: none;
           transform: none;
         }
+        @media(max-width:480px) { .frh-btn-submit { width: 100%; justify-content: center; } }
       `}</style>
 
       <div className="frh-wrap">
         {/* ── Header ── */}
         <div className="frh-header">
           <h1 className="frh-title">سجل التقارير المالية</h1>
+          <input
+            type="text"
+            className="frh-search-box"
+            placeholder="ابحث عن التقرير أو الفئة..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+          />
           <div className="frh-actions">
             <button className="frh-btn-export" onClick={handleExport}>
               <FileSpreadsheet size={16} />
@@ -371,85 +673,123 @@ export default function FinancialReportsView() {
           </div>
         </div>
 
-        {/* ── Table Card ── */}
-        <div className="frh-card">
-          <div className="frh-table-wrap">
-            <table className="frh-table">
-              <thead className="frh-thead">
-                <tr>
-                  <th style={{ width: 40 }}></th>
-                  <th>
-                    <span className="frh-th-inner">
-                      تاريخ آخر عملية <ChevronDown size={12} />
-                    </span>
-                  </th>
-                  <th>
-                    <span className="frh-th-inner">
-                      الفئة <ChevronDown size={12} />
-                    </span>
-                  </th>
-                  <th>
-                    <span className="frh-th-inner">
-                      إجمالي المبلغ <ChevronDown size={12} />
-                    </span>
-                  </th>
-                  <th>
-                    <span className="frh-th-inner">
-                      الحالة <ChevronDown size={12} />
-                    </span>
-                  </th>
-                  <th style={{ width: 40 }}></th>
-                </tr>
-              </thead>
-              <tbody className="frh-tbody">
-                {reports.length === 0 ? (
-                  <tr>
-                    <td colSpan={6}>
-                      <div className="frh-empty">
-                        <div className="frh-empty-icon">
-                          <FileText size={26} color="#94a3b8" />
-                        </div>
-                        <p>لا توجد تقارير حتى الآن</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  reports.map(report => {
-                    const cfg = STATUS_CONFIG[report.status] ?? STATUS_CONFIG.draft
-                    return (
-                      <tr key={report.id} onClick={() => handleRowClick(report)}>
-                        <td>
-                          <button
-                            className="frh-del-btn"
-                            onClick={e => handleDelete(e, report.id)}
-                            title="حذف التقرير"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                        <td className="frh-td-date">{report.lastOperationDate}</td>
-                        <td className="frh-td-cat">{report.category}</td>
-                        <td className="frh-td-amt">{report.totalAmount}</td>
-                        <td>
-                          <span
-                            className="frh-status-badge"
-                            style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}
-                          >
-                            {cfg.label}
-                          </span>
-                        </td>
-                        <td style={{ width: 40 }}></td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
+        {/* ── AG Grid Table ── */}
+        <div className="frh-card" style={{ height: '500px', minHeight: '400px' }}>
+          <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+            <AgGridReact
+              ref={gridRef}
+              rowData={filteredReports}
+              columnDefs={columnDefs}
+              defaultColDef={{
+                sortable: true,
+                resizable: true,
+                suppressMovable: true,
+              }}
+              domLayout="autoHeight"
+              suppressPaginationPanel={true}
+              suppressScrollOnNewData={true}
+              onCellClicked={(params) => {
+                if (params.colDef.field !== 'selected' && params.colDef.field !== 'actions' && params.colDef.field !== 'status') {
+                  setSelectedReport(params.data)
+                }
+              }}
+              context={{
+                onCheckboxChange: handleCheckboxChange,
+                onStatusChange: handleStatusChange,
+                onDelete: handleDelete,
+              }}
+            />
           </div>
         </div>
       </div>
 
+      {/* ── Modal ── */}
+      {showModal && (
+        <div className="frh-modal-overlay" onClick={() => handleCloseModal()}>
+          <div className="frh-modal" onClick={e => e.stopPropagation()}>
+            <div className="frh-modal-header">
+              <div className="frh-modal-title-wrap">
+                <div className="frh-modal-ico">
+                  <Plus size={20} />
+                </div>
+                <h2 className="frh-modal-title">إنشاء تقرير جديد</h2>
+              </div>
+              <button className="frh-modal-close" onClick={() => handleCloseModal()}>
+                <X size={20} />
+              </button>
+            </div>
 
+            <div className="frh-field">
+              <label className="frh-label">
+                <span>*</span> عنوان التقرير
+              </label>
+              <input
+                type="text"
+                className={'frh-input' + (formErr && !newTitle ? ' error' : '')}
+                placeholder="أدخل عنوان التقرير"
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="frh-field">
+              <label className="frh-label">الفئة</label>
+              <div className="frh-cat-wrap" ref={catRef}>
+                <button className="frh-cat-btn" onClick={() => setCatOpen(!catOpen)}>
+                  <span>{newCat || 'اختر فئة'}</span>
+                  <ChevronDown size={16} />
+                </button>
+                {catOpen && (
+                  <div className="frh-cat-dd">
+                    {CATEGORIES.map(cat => (
+                      <div
+                        key={cat}
+                        className={'frh-cat-opt' + (newCat === cat ? ' active' : '')}
+                        onClick={() => {
+                          setNewCat(cat)
+                          setCatOpen(false)
+                        }}
+                      >
+                        {cat}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="frh-field">
+              <label className="frh-label">الوصف</label>
+              <textarea
+                className="frh-textarea"
+                placeholder="أدخل وصفاً للتقرير (اختياري)"
+                value={newDesc}
+                onChange={e => setNewDesc(e.target.value)}
+              ></textarea>
+            </div>
+
+            {formErr && <div className="frh-error">{formErr}</div>}
+
+            <div className="frh-modal-actions">
+              <button className="frh-btn-cancel" onClick={() => handleCloseModal()}>
+                إلغاء
+              </button>
+              <button className="frh-btn-submit" onClick={handleCreate}>
+                <Plus size={16} />
+                إنشاء التقرير
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
+
+  function handleCloseModal() {
+    setShowModal(false)
+    setNewTitle('')
+    setNewDesc('')
+    setNewCat('')
+    setFormErr('')
+  }
 }

@@ -91,13 +91,14 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
   return (
     <>
       <style>{`
+        /* ── Signup View Responsive Layout ── */
         .sv-wrap {
           min-height: 100vh;
           background: #f5f5f5;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
+          padding: 16px;
           direction: rtl;
           font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
         }
@@ -116,62 +117,121 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
 
         .sv-header {
           background: linear-gradient(135deg, #c1272d, #a91f24);
-          padding: 32px 24px;
+          padding: 28px 20px;
           text-align: center;
         }
 
+        @media (min-width: 480px) {
+          .sv-header {
+            padding: 32px 24px;
+          }
+        }
+
         .sv-logo {
-          width: 48px;
-          height: 48px;
+          width: 44px;
+          height: 44px;
           background: #fff;
           border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto 12px;
-          font-size: 20px;
+          margin: 0 auto 10px;
+          font-size: 18px;
           color: #c1272d;
         }
+
+        @media (min-width: 480px) {
+          .sv-logo {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            font-size: 20px;
+          }
+        }
+
         .sv-logo img {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           object-fit: contain;
         }
 
+        @media (min-width: 480px) {
+          .sv-logo img {
+            width: 36px;
+            height: 36px;
+          }
+        }
+
         .sv-title {
-          font-size: 1.35rem;
+          font-size: 1.25rem;
           font-weight: 800;
           color: #fff;
           margin-bottom: 4px;
         }
 
+        @media (min-width: 480px) {
+          .sv-title {
+            font-size: 1.35rem;
+          }
+        }
+
         .sv-subtitle {
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: rgba(255, 255, 255, 0.85);
         }
 
+        @media (min-width: 480px) {
+          .sv-subtitle {
+            font-size: 0.8rem;
+          }
+        }
+
         .sv-body {
-          padding: 28px 24px;
+          padding: 20px;
+        }
+
+        @media (min-width: 480px) {
+          .sv-body {
+            padding: 28px 24px;
+          }
         }
 
         .sv-form {
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 12px;
+        }
+
+        @media (min-width: 480px) {
+          .sv-form {
+            gap: 14px;
+          }
         }
 
         .sv-field {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 5px;
+        }
+
+        @media (min-width: 480px) {
+          .sv-field {
+            gap: 6px;
+          }
         }
 
         .sv-label {
-          font-size: 0.8rem;
+          font-size: 0.7rem;
           font-weight: 700;
           color: #374151;
           text-transform: uppercase;
           letter-spacing: 0.02em;
+        }
+
+        @media (min-width: 480px) {
+          .sv-label {
+            font-size: 0.8rem;
+          }
         }
 
         .sv-input-wrap {
@@ -180,11 +240,11 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
 
         .sv-input {
           width: 100%;
-          padding: 10px 14px 10px 36px;
+          padding: 9px 12px 9px 32px;
           border: 1.5px solid #e2e8f0;
           border-radius: 9px;
           font-family: inherit;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: #1e293b;
           background: #fff;
           outline: none;
@@ -192,69 +252,18 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
           transition: border-color 0.2s, box-shadow 0.2s;
         }
 
+        @media (min-width: 480px) {
+          .sv-input {
+            padding: 10px 14px 10px 36px;
+            font-size: 0.8rem;
+          }
+        }
+
         .sv-input:focus {
           outline: none;
           border-color: #c1272d;
           box-shadow: inset 0 0 0 3px rgba(193, 39, 45, 0.06);
           background: #fff;
-          color: #c1272d;
-        }
-
-        .sv-password-strength-label {
-          font-size: 0.7rem;
-          color: #c1272d;
-          font-weight: 700;
-        }
-
-        .sv-checkbox-wrap {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          font-size: 0.8rem;
-          color: #c1272d;
-        }
-
-        .sv-submit-btn {
-          padding: 12px;
-          background: linear-gradient(135deg, #c1272d, #a91f24);
-          color: #fff;
-          border: none;
-          border-radius: 10px;
-          font-family: inherit;
-          font-size: 0.95rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(193, 39, 45, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .sv-submit-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(193, 39, 45, 0.4);
-        }
-
-        .sv-footer {
-          text-align: center;
-          padding: 20px 24px;
-          border-top: 1px solid #f1f5f9;
-          font-size: 0.875rem;
-          color: #64748b;
-        }
-
-        .sv-login-link {
-          color: #c1272d;
-          text-decoration: none;
-          font-weight: 700;
-          cursor: pointer;
-          transition: color 0.2s;
-        }
-
-        .sv-login-link:hover {
-          color: #a91f24;
         }
 
         .sv-input::placeholder {
@@ -263,25 +272,39 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
 
         .sv-icon {
           position: absolute;
-          right: 10px;
+          right: 9px;
           top: 50%;
           transform: translateY(-50%);
           color: #94a3b8;
           pointer-events: none;
-          font-size: 0.9rem;
+          font-size: 0.8rem;
+        }
+
+        @media (min-width: 480px) {
+          .sv-icon {
+            right: 10px;
+            font-size: 0.9rem;
+          }
         }
 
         .sv-password-toggle {
           position: absolute;
-          left: 10px;
+          left: 9px;
           top: 50%;
           transform: translateY(-50%);
           background: none;
           border: none;
           color: #64748b;
           cursor: pointer;
-          padding: 3px;
+          padding: 2px;
           transition: color 0.2s;
+        }
+
+        @media (min-width: 480px) {
+          .sv-password-toggle {
+            left: 10px;
+            padding: 3px;
+          }
         }
 
         .sv-password-toggle:hover {
@@ -289,19 +312,33 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         }
 
         .sv-password-strength {
-          margin-top: 6px;
+          margin-top: 4px;
           display: flex;
           align-items: center;
-          gap: 8px;
-          font-size: 0.7rem;
+          gap: 6px;
+          font-size: 0.65rem;
+        }
+
+        @media (min-width: 480px) {
+          .sv-password-strength {
+            margin-top: 6px;
+            gap: 8px;
+            font-size: 0.7rem;
+          }
         }
 
         .sv-strength-bar {
           flex: 1;
-          height: 3px;
+          height: 2px;
           background: #f1f5f9;
           border-radius: 2px;
           overflow: hidden;
+        }
+
+        @media (min-width: 480px) {
+          .sv-strength-bar {
+            height: 3px;
+          }
         }
 
         .sv-strength-fill {
@@ -312,13 +349,22 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         .sv-error {
           display: flex;
           align-items: flex-start;
-          gap: 8px;
-          padding: 10px 12px;
+          gap: 6px;
+          padding: 9px 10px;
           background: #fee2e2;
           border: 1px solid #fca5a5;
           border-radius: 9px;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: #dc2626;
+          margin-bottom: 8px;
+        }
+
+        @media (min-width: 480px) {
+          .sv-error {
+            gap: 8px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+          }
         }
 
         .sv-error-icon {
@@ -329,19 +375,34 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         .sv-agreement {
           display: flex;
           align-items: flex-start;
-          gap: 8px;
-          font-size: 0.75rem;
+          gap: 6px;
+          font-size: 0.7rem;
           color: #64748b;
+          line-height: 1.3;
+        }
+
+        @media (min-width: 480px) {
+          .sv-agreement {
+            gap: 8px;
+            font-size: 0.75rem;
+          }
         }
 
         .sv-agreement input {
           cursor: pointer;
-          width: 14px;
-          height: 14px;
+          width: 12px;
+          height: 12px;
           border-radius: 3px;
           border: 1.5px solid #e2e8f0;
           flex-shrink: 0;
           margin-top: 2px;
+        }
+
+        @media (min-width: 480px) {
+          .sv-agreement input {
+            width: 14px;
+            height: 14px;
+          }
         }
 
         .sv-terms-link {
@@ -355,27 +416,35 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         }
 
         .sv-submit-btn {
-          padding: 11px;
-          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          padding: 10px;
+          background: linear-gradient(135deg, #c1272d, #a91f24);
           color: #fff;
           border: none;
           border-radius: 9px;
           font-family: inherit;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 12px rgba(193, 39, 45, 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 5px;
           margin-top: 4px;
+        }
+
+        @media (min-width: 480px) {
+          .sv-submit-btn {
+            padding: 11px;
+            font-size: 0.9rem;
+            gap: 6px;
+          }
         }
 
         .sv-submit-btn:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+          box-shadow: 0 6px 20px rgba(193, 39, 45, 0.4);
         }
 
         .sv-submit-btn:disabled {
@@ -384,23 +453,30 @@ export default function SignUpView({ onNavigateToLogin, onSignUpSuccess }: {
         }
 
         .sv-footer {
-          padding: 0 24px 20px;
+          padding: 14px 20px;
           text-align: center;
-          font-size: 0.8rem;
+          font-size: 0.75rem;
           color: #64748b;
           border-top: 1px solid #f1f5f9;
         }
 
+        @media (min-width: 480px) {
+          .sv-footer {
+            padding: 0 24px 20px;
+            font-size: 0.8rem;
+          }
+        }
+
         .sv-login-link {
-          color: #3b82f6;
+          color: #c1272d;
           text-decoration: none;
           font-weight: 700;
           cursor: pointer;
-          margin-left: 4px;
+          transition: color 0.2s;
         }
 
         .sv-login-link:hover {
-          color: #2563eb;
+          color: #a91f24;
         }
       `}</style>
 
