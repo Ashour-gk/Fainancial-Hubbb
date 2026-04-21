@@ -39,23 +39,83 @@ const STATUS_CONFIG = {
   deleted: { label: 'محذوف', bg: '#f3f4f6', color: '#6b7280' },
 }
 
-const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات', 'رواتب', 'صيانة']
+const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات']
 
 /* ══════════════════════════════════════════════
    AG GRID CELL RENDERERS
 ══════════════════════════════════════════════ */
-function StatusRenderer({ value }: ICellRendererParams) {
+function StatusRenderer({ value, data, context }: ICellRendererParams) {
+  const [showDropdown, setShowDropdown] = useState(false)
   const cfg = STATUS_CONFIG[value as keyof typeof STATUS_CONFIG]
   if (!cfg) return null
+
+  const statusOptions = ['approved', 'review', 'rejected', 'completed', 'draft', 'deleted'] as const
+
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      padding: '3px 7px', borderRadius: 10,
-      fontSize: '.77rem', fontWeight: 700, whiteSpace: 'nowrap',
-      background: cfg.bg, color: cfg.color,
-    }}>
-      {cfg.label}
-    </span>
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <span
+        onClick={() => setShowDropdown(!showDropdown)}
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          padding: '3px 7px', borderRadius: 10,
+          fontSize: '.77rem', fontWeight: 700, whiteSpace: 'nowrap',
+          background: cfg.bg, color: cfg.color,
+          cursor: 'pointer', transition: 'opacity .15s',
+          opacity: showDropdown ? 0.7 : 1,
+        }}
+      >
+        {cfg.label}
+      </span>
+      {showDropdown && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            right: 0,
+            background: '#fff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 8,
+            boxShadow: '0 8px 16px rgba(15, 27, 45, 0.1)',
+            zIndex: 100,
+            minWidth: 140,
+          }}
+        >
+          {statusOptions.map(status => {
+            const sCfg = STATUS_CONFIG[status]
+            return (
+              <div
+                key={status}
+                onClick={() => {
+                  context.onStatusChange(data.id, status)
+                  setShowDropdown(false)
+                }}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '.8rem',
+                  color: sCfg.color,
+                  background: status === value ? sCfg.bg : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'background .12s',
+                  borderBottom: status !== statusOptions[statusOptions.length - 1] ? '1px solid #f1f5f9' : 'none',
+                }}
+                onMouseEnter={e => {
+                  if (status !== value) {
+                    (e.currentTarget as HTMLElement).style.background = '#f8fafc'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (status !== value) {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent'
+                  }
+                }}
+              >
+                {sCfg.label}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -163,7 +223,7 @@ function CreateReportModal({
             <button className="crm-xbtn" onClick={onClose}><X size={17} /></button>
           </div>
           <div className="crm-meta">
-            <span className="crm-meta-item"><User size={14} /><span className="crm-meta-val">أحمد يحيى</span></span>
+            <span className="crm-meta-item"><User size={14} /><span className="crm-meta-val">Mr. Sweilem</span></span>
             <span className="crm-meta-item"><Calendar size={14} /><span className="crm-meta-val">{today}</span></span>
           </div>
           <div className="crm-body">
@@ -232,6 +292,13 @@ export default function ReportsView() {
   const handleDelete = useCallback((id: number) => {
     setRowData(prev => prev.filter(r => r.id !== id))
     flash('تم حذف التقرير')
+  }, [])
+
+  const handleStatusChange = useCallback((id: number, newStatus: string) => {
+    setRowData(prev => prev.map(r => 
+      r.id === id ? { ...r, status: newStatus as ReportRecord['status'] } : r
+    ))
+    flash('تم تحديث حالة التقرير')
   }, [])
 
   const handleCreate = (title: string, _desc: string, category: string) => {
@@ -303,9 +370,10 @@ export default function ReportsView() {
       flex: 1,
       sortable: true, filter: 'agTextColumnFilter',
       cellRenderer: StatusRenderer,
+      cellRendererParams: { context: { onStatusChange: handleStatusChange } },
       cellStyle: () => ({ display: 'flex', alignItems: 'center' }),
     },
-  ], [handleDelete])
+  ], [handleDelete, handleStatusChange])
 
   const defaultColDef = useMemo<ColDef>(() => ({
     resizable: true,
@@ -391,7 +459,7 @@ export default function ReportsView() {
             </button>
             <button className="rv-btn rv-btn-green" onClick={handleExport} disabled={isExporting}>
               <FileSpreadsheet size={16} />
-              {isExporting ? 'جاري التصدير…' : 'تصدير بصيغة إكسل'}
+              {isExporting ? 'جاري التصدير…' : 'تصدير بصيغ�� إكسل'}
             </button>
           </div>
         </div>

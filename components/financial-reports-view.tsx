@@ -27,16 +27,16 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
   draft:     { label: 'مسودّة',       bg: '#f8fafc', color: '#94a3b8', border: '#cbd5e1' },
 }
 
-const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات', 'رواتب', 'صيانة']
+const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات']
 
 /* ─── Seed data ─── */
 const INITIAL_REPORTS: Report[] = [
-  { id: 1, title: 'بيانات تسوية عهدة مبلغ',    category: 'إشتراكات نت',     status: 'approved',  lastOperationDate: '1/15/2024', totalAmount: '£4,750.00',  createdBy: 'أحمد يحيى' },
-  { id: 2, title: 'مشتريات مكتبية متنوعة',       category: 'مشتريات متنوعة', status: 'review',    lastOperationDate: '2/1/2024',  totalAmount: '£12,500.00', createdBy: 'أحمد يحيى' },
-  { id: 3, title: 'عهدة نقدية ربع سنوية',        category: 'عهدة',           status: 'rejected',  lastOperationDate: '1/28/2024', totalAmount: '£25,000.00', createdBy: 'أحمد يحيى' },
-  { id: 4, title: 'مصاريف انتقالات الموظفين',    category: 'انتقالات',       status: 'completed', lastOperationDate: '12/1/2023', totalAmount: '£3,200.00',  createdBy: 'أحمد يحيى' },
-  { id: 5, title: 'مشتريات معدات تقنية',         category: 'مشتريات متنوعة', status: 'draft',     lastOperationDate: '2/5/2024',  totalAmount: '£980.00',    createdBy: 'أحمد يحيى' },
-  { id: 6, title: 'اشتراك خدمات الإنترنت',       category: 'إشتراكات نت',    status: 'deleted',   lastOperationDate: '2/10/2024', totalAmount: '£1,500.00',  createdBy: 'أحمد يحيى' },
+  { id: 1, title: 'بيانات تسوية عهدة مبلغ',    category: 'إشتراكات نت',     status: 'approved',  lastOperationDate: '1/15/2024', totalAmount: '£4,750.00',  createdBy: 'Mr. Sweilem' },
+  { id: 2, title: 'مشتريات مكتبية متنوعة',       category: 'مشتريات متنوعة', status: 'review',    lastOperationDate: '2/1/2024',  totalAmount: '£12,500.00', createdBy: 'Mr. Sweilem' },
+  { id: 3, title: 'عهدة نقدية ربع سنوية',        category: 'عهدة',           status: 'rejected',  lastOperationDate: '1/28/2024', totalAmount: '£25,000.00', createdBy: 'Mr. Sweilem' },
+  { id: 4, title: 'مصاريف انتقالات الموظفين',    category: 'انتقالات',       status: 'completed', lastOperationDate: '12/1/2023', totalAmount: '£3,200.00',  createdBy: 'Mr. Sweilem' },
+  { id: 5, title: 'مشتريات معدات تقنية',         category: 'مشتريات متنوعة', status: 'draft',     lastOperationDate: '2/5/2024',  totalAmount: '£980.00',    createdBy: 'Mr. Sweilem' },
+  { id: 6, title: 'اشتراك خدمات الإنترنت',       category: 'إشتراكات نت',    status: 'deleted',   lastOperationDate: '2/10/2024', totalAmount: '£1,500.00',  createdBy: 'Mr. Sweilem' },
 ]
 
 let nextId = INITIAL_REPORTS.length + 1
@@ -78,7 +78,7 @@ export default function FinancialReportsView() {
       status: 'draft',
       lastOperationDate: dateStr,
       totalAmount: '£0.00',
-      createdBy: 'أحمد يحيى',
+      createdBy: 'Mr. Sweilem',
     }
     setReports(prev => [newReport, ...prev])
     setShowModal(false)
@@ -368,10 +368,6 @@ export default function FinancialReportsView() {
               <FileSpreadsheet size={16} />
               تصدير بصيغة اكسل
             </button>
-            <button className="frh-btn-create" onClick={() => setShowModal(true)}>
-              <Plus size={16} />
-              إنشاء تقرير
-            </button>
           </div>
         </div>
 
@@ -453,109 +449,7 @@ export default function FinancialReportsView() {
         </div>
       </div>
 
-      {/* ══ Create Report Modal ══ */}
-      {showModal && (
-        <div className="frh-modal-overlay" onClick={e => { if (e.target === e.currentTarget) handleCloseModal() }}>
-          <div className="frh-modal">
-            {/* Modal Header */}
-            <div className="frh-modal-header">
-              <div className="frh-modal-title-wrap">
-                <div className="frh-modal-ico"><FileText size={18} /></div>
-                <span className="frh-modal-title">أنشئ تقريراً جديداً</span>
-              </div>
-              <button className="frh-modal-close" onClick={handleCloseModal}>
-                <X size={16} />
-              </button>
-            </div>
 
-            {/* Meta: user + date */}
-            <div className="frh-modal-meta">
-              <User size={14} />
-              <span>أحمد يحيى</span>
-              <span style={{ margin: '0 8px', color: '#cbd5e1' }}>|</span>
-              <Calendar size={14} />
-              <span>
-                {new Date().toLocaleDateString('ar-EG', {
-                  year: 'numeric', month: 'numeric', day: 'numeric'
-                })}
-              </span>
-            </div>
-
-            {/* Title field */}
-            <div className="frh-field">
-              <label className="frh-label">
-                عنوان التقرير <span>*</span>
-              </label>
-              <input
-                className={`frh-input${formErr ? ' error' : ''}`}
-                placeholder="مثال: بيانات تسوية عهدة مبلغ"
-                value={newTitle}
-                onChange={e => { setNewTitle(e.target.value); setFormErr('') }}
-                autoFocus
-              />
-              {formErr && <div className="frh-error">{formErr}</div>}
-            </div>
-
-            {/* Description field */}
-            <div className="frh-field">
-              <label className="frh-label">الوصف <span>*</span></label>
-              <textarea
-                className="frh-textarea"
-                placeholder="وصف مختصر عن التقرير..."
-                value={newDesc}
-                onChange={e => setNewDesc(e.target.value)}
-              />
-            </div>
-
-            {/* Category field */}
-            <div className="frh-field">
-              <label className="frh-label">التصنيف <span>*</span></label>
-              <div className="frh-cat-wrap" ref={catRef}>
-                <button
-                  type="button"
-                  className="frh-cat-btn"
-                  onClick={() => setCatOpen(o => !o)}
-                >
-                  <span style={{ color: newCat ? '#0f1b2d' : '#cbd5e1' }}>
-                    {newCat || 'اختر تصنيفاً...'}
-                  </span>
-                  <ChevronDown
-                    size={14}
-                    style={{ flexShrink: 0, transition: 'transform .2s', transform: catOpen ? 'rotate(180deg)' : 'none' }}
-                  />
-                </button>
-                {catOpen && (
-                  <div className="frh-cat-dd">
-                    {CATEGORIES.map(c => (
-                      <div
-                        key={c}
-                        className={`frh-cat-opt${newCat === c ? ' active' : ''}`}
-                        onClick={() => { setNewCat(c); setCatOpen(false) }}
-                      >
-                        {c}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="frh-modal-actions">
-              <button className="frh-btn-cancel" onClick={handleCloseModal}>إلغاء</button>
-              <button
-                className="frh-btn-submit"
-                onClick={handleCreate}
-                disabled={!newTitle.trim() || !newDesc.trim() || !newCat}
-                title={!newTitle.trim() || !newDesc.trim() || !newCat ? 'يرجى تعبئة جميع الحقول أولاً' : undefined}
-              >
-                <Plus size={15} />
-                إنشاء التقرير
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }

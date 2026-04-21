@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { User, Mail, Phone, MapPin, Lock, Bell, Shield, Edit3, Camera, CheckCircle } from 'lucide-react'
 
 export default function ProfileView() {
-  const [name, setName] = useState('أحمد يحيى')
+  const [name, setName] = useState('Mr. Sweilem')
   const [email, setEmail] = useState('ahmed.yahya@financialhub.com')
   const [phone, setPhone] = useState('+20 100 123 4567')
   const [location, setLocation] = useState('القاهرة، مصر')

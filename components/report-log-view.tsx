@@ -144,7 +144,7 @@ export default function ReportLogView() {
   const [catOpen, setCatOpen] = useState(false)
   const [rows, setRows] = useState<ExpenseRow[]>(INITIAL_ROWS)
   const [saved, setSaved] = useState(false)
-  const createdBy = 'أحمد يحيى'
+  const createdBy = 'Mr. Sweilem'
   const createdDate = '١٥ يناير ٢٠٢٤'
 
   /* helpers */

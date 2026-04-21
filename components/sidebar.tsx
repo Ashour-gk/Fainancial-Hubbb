@@ -44,7 +44,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const tabs = [
     { id: 'dashboard',  icon: <LayoutGrid size={20} />, label: 'لوحة المعلومات' },
     { id: 'financial',  icon: <FileText size={20} />,   label: 'التقارير المالية' },
-    { id: 'profile',    icon: <User size={20} />,       label: 'الملف الشخصي' },
+    { id: 'notifications',    icon: <User size={20} />,       label: 'الإشعارات' },
   ]
 
   const handleNav = (id: string) => {
@@ -78,15 +78,15 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           height: 40px;
           border-radius: 12px;
           border: none;
-          background: #0f2442;
+          background: #c1272d;
           color: #e2e8f0;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 14px rgba(193,39,45,0.3);
           transition: background .18s;
         }
-        .msb-ham:hover { background: #1e3a5f; }
+        .msb-ham:hover { background: #d63136; }
 
         /* ── Overlay backdrop (mobile) ── */
         .msb-overlay {
@@ -110,7 +110,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           top: 0;
           display: flex;
           flex-direction: column;
-          background: linear-gradient(180deg, #0d1f35 0%, #0f2442 60%, #0d1b30 100%);
+          background: linear-gradient(180deg, #b82228 0%, #c1272d 60%, #a91f24 100%);
           border-left: 1px solid rgba(255,255,255,0.07);
           direction: rtl;
           overflow: visible;
@@ -133,9 +133,9 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           width: 28px;
           height: 28px;
           border-radius: 50%;
-          background: #1e3a5f;
+          background: #c1272d;
           border: 2px solid rgba(255,255,255,0.1);
-          box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+          box-shadow: 0 2px 10px rgba(193,39,45,0.35);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -145,7 +145,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           z-index: 50;
           flex-shrink: 0;
         }
-        .msb-toggle:hover { background: #2563eb; color: #fff; border-color: rgba(59,130,246,0.4); }
+        .msb-toggle:hover { background: #d63136; color: #fff; border-color: rgba(214,49,54,0.4); }
         .msb.msb-collapsed .msb-toggle { transform: rotate(180deg); }
 
         /* ── Brand ── */
@@ -161,10 +161,15 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         .msb-brand-icon {
           width: 36px; height: 36px;
           border-radius: 10px;
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background: #fff;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
           flex-shrink: 0;
+        }
+        .msb-brand-icon img {
+          width: 28px;
+          height: 28px;
+          object-fit: contain;
         }
         .msb-brand-text {
           overflow: hidden;
@@ -205,12 +210,12 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         }
         .msb.msb-collapsed .msb-item { justify-content:center; padding:10px; gap:0; }
         .msb-item:hover { background:rgba(255,255,255,0.07); color:#fff; }
-        .msb-item:hover .msb-item-icon { color:#60a5fa; }
-        .msb-item.msb-active { background:rgba(59,130,246,0.18); color:#fff; font-weight:600; }
-        .msb-item.msb-active .msb-item-icon { color:#60a5fa; }
+        .msb-item:hover .msb-item-icon { color:#ffcccc; }
+        .msb-item.msb-active { background:rgba(255,255,255,0.15); color:#fff; font-weight:600; }
+        .msb-item.msb-active .msb-item-icon { color:#fff; }
         .msb-item.msb-active::before {
           content:''; position:absolute; right:0; top:50%; transform:translateY(-50%);
-          width:3px; height:60%; border-radius:0 3px 3px 0; background:#3b82f6;
+          width:3px; height:60%; border-radius:0 3px 3px 0; background:#fff;
         }
         .msb-item-icon {
           display:flex; align-items:center; flex-shrink:0;
@@ -272,10 +277,10 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         .msb.msb-collapsed .msb-user { justify-content:center; padding:14px 0 20px; }
         .msb-avatar {
           width:34px; height:34px; border-radius:50%;
-          background:linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background:linear-gradient(135deg, #d63136, #c1272d);
           display:flex; align-items:center; justify-content:center;
           color:#fff; font-size:.8rem; font-weight:700; flex-shrink:0;
-          box-shadow:0 2px 8px rgba(37,99,235,0.35);
+          box-shadow:0 2px 8px rgba(193,39,45,0.35);
         }
         .msb-user-info {
           overflow:hidden;
@@ -405,10 +410,10 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         {/* ── Brand ── */}
         <div className="msb-brand">
           <div className="msb-brand-icon">
-            <LayoutGrid size={18} color="#fff" />
+            <img src="/elsewedy-logo.png" alt="Elsewedy Logo" />
           </div>
           <div className="msb-brand-text">
-            <div className="msb-brand-name">Financial Hub</div>
+            <div className="msb-brand-name">Elsewedy</div>
             <div className="msb-brand-sub">نظام التقارير المالية</div>
           </div>
         </div>
@@ -441,9 +446,9 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           <div className="msb-divider" />
 
           <div className="msb-user">
-            <div className="msb-avatar">أح</div>
+            <div className="msb-avatar">MS</div>
             <div className="msb-user-info">
-              <div className="msb-user-name">أحمد يحيى</div>
+              <div className="msb-user-name">Mr. Sweilem</div>
               <div className="msb-user-role">مدير النظام</div>
             </div>
           </div>

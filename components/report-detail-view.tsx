@@ -37,7 +37,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
   draft:     { label: 'مسودّة',       bg: '#f8fafc', color: '#94a3b8', border: '#cbd5e1' },
 }
 
-const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات', 'رواتب', 'صيانة']
+const CATEGORIES = ['إشتراكات نت', 'مشتريات متنوعة', 'عهدة', 'انتقالات']
 const SAMPLE_TAGS = ['مثال', 'فاتورة', 'إيصال', 'عقد', 'أخرى']
 
 let nextId = 10
@@ -240,7 +240,7 @@ export default function ReportDetailView({ report, onBack }: ReportDetailProps) 
             <span className="rd-meta-item">
               <User size={14} color="#94a3b8" />
               <span>أنشئ بواسطة</span>
-              <span className="rd-meta-val">أحمد يحيى</span>
+              <span className="rd-meta-val">Mr. Sweilem</span>
             </span>
             <span className="rd-meta-item">
               <Calendar size={14} color="#94a3b8" />
@@ -264,7 +264,6 @@ export default function ReportDetailView({ report, onBack }: ReportDetailProps) 
               <thead className="rd-thead">
                 <tr>
                   <th style={{ width: 40, textAlign: 'center' }}>م</th>
-                  <th style={{ width: 120 }}>التاريخ</th>
                   <th style={{ width: 100 }}>المبلغ</th>
                   <th>البيان</th>
                   <th style={{ width: 160 }}>المرفقات</th>
@@ -275,17 +274,6 @@ export default function ReportDetailView({ report, onBack }: ReportDetailProps) 
                 {rows.map((row, idx) => (
                   <tr key={row.id}>
                     <td className="rd-row-num">{idx + 1}</td>
-                    <td>
-                      <input
-                        type="date"
-                        className="rd-cell-input rd-date-input"
-                        value={row.date ? (() => { const p = row.date.split('/'); return p.length === 3 ? `${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}` : '' })() : ''}
-                        onChange={e => {
-                          const d = new Date(e.target.value)
-                          if (!isNaN(d.getTime())) updateRow(row.id, 'date', d.toLocaleDateString('en-US'))
-                        }}
-                      />
-                    </td>
                     <td>
                       <input
                         type="number"
