@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react'
 import {
-  Plus, Trash2, FileSpreadsheet, ChevronDown
+  Plus, Trash2, FileSpreadsheet, ChevronDown, X
 } from 'lucide-react'
 import { AgGridReact } from 'ag-grid-react'
 import 'ag-grid-community/styles/ag-grid.css'
@@ -675,30 +675,31 @@ export default function FinancialReportsView() {
 
         {/* ── AG Grid Table ── */}
         <div className="frh-card" style={{ height: '500px', minHeight: '400px' }}>
-          <AgGridReact
-            ref={gridRef}
-            rowData={filteredReports}
-            columnDefs={columnDefs}
-            defaultColDef={{
-              sortable: true,
-              resizable: true,
-              suppressMovable: true,
-            }}
-            theme="ag-theme-quartz"
-            domLayout="autoHeight"
-            suppressPaginationPanel={true}
-            suppressScrollOnNewData={true}
-            onCellClicked={(params) => {
-              if (params.colDef.field !== 'selected' && params.colDef.field !== 'actions' && params.colDef.field !== 'status') {
-                setSelectedReport(params.data)
-              }
-            }}
-            context={{
-              onCheckboxChange: handleCheckboxChange,
-              onStatusChange: handleStatusChange,
-              onDelete: handleDelete,
-            }}
-          />
+          <div className="ag-theme-quartz" style={{ height: '100%', width: '100%' }}>
+            <AgGridReact
+              ref={gridRef}
+              rowData={filteredReports}
+              columnDefs={columnDefs}
+              defaultColDef={{
+                sortable: true,
+                resizable: true,
+                suppressMovable: true,
+              }}
+              domLayout="autoHeight"
+              suppressPaginationPanel={true}
+              suppressScrollOnNewData={true}
+              onCellClicked={(params) => {
+                if (params.colDef.field !== 'selected' && params.colDef.field !== 'actions' && params.colDef.field !== 'status') {
+                  setSelectedReport(params.data)
+                }
+              }}
+              context={{
+                onCheckboxChange: handleCheckboxChange,
+                onStatusChange: handleStatusChange,
+                onDelete: handleDelete,
+              }}
+            />
+          </div>
         </div>
       </div>
 
